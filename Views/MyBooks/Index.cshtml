@@ -1,0 +1,67 @@
+@model List<BookTracker.ViewModels.MyBookItemViewModel>
+@using BookTracker.Models
+@{
+    ViewData["Title"] = "Мої книги";
+}
+
+<h1>Мої книги</h1>
+
+@if (!Model.Any())
+{
+    <p>Ви ще не додали жодної книги. <a asp-controller="Books" asp-action="Index">Перейти до каталогу</a>.</p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Назва</th>
+                <th>Автор</th>
+                <th>Статус</th>
+                <th>Моя оцінка</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td><a asp-controller="Books" asp-action="Details" asp-route-id="@item.UserBook.BookId">@item.UserBook.Book!.Title</a></td>
+                <td>@item.UserBook.Book!.Author</td>
+                <td>
+                    <form method="post" asp-action="UpdateStatus" class="d-flex align-items-center gap-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userBookId" value="@item.UserBook.Id" />
+                        <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                            @foreach (ReadingStatus s in Enum.GetValues(typeof(ReadingStatus)))
+                            {
+                                <option value="@s" selected="@(item.UserBook.Status == s)">@s.GetDisplayName()</option>
+                            }
+                        </select>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" asp-action="Rate" class="d-flex align-items-center gap-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="bookId" value="@item.UserBook.BookId" />
+                        <select name="value" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                            <option value="">—</option>
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <option value="@i" selected="@(item.MyRating == i)">@i</option>
+                            }
+                        </select>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" asp-action="Remove">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userBookId" value="@item.UserBook.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Прибрати</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

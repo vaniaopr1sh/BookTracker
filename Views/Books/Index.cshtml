@@ -1,0 +1,78 @@
+@model List<BookTracker.ViewModels.BookListItemViewModel>
+@using BookTracker.Models
+@{
+    ViewData["Title"] = "Книги";
+    var isAdmin = User.IsInRole(Roles.Administrator);
+}
+
+<h1>Каталог книг</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <input type="text" name="search" value="@ViewData["Search"]" class="form-control" placeholder="Пошук за назвою або автором" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Пошук</button>
+    </div>
+</form>
+
+@if (isAdmin)
+{
+    <p><a asp-action="Create" class="btn btn-primary">Додати книгу</a></p>
+}
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Назва</th>
+            <th>Автор</th>
+            <th>Жанр</th>
+            <th>Рік</th>
+            <th>Рейтинг</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td><a asp-action="Details" asp-route-id="@item.Book.Id">@item.Book.Title</a></td>
+            <td>@item.Book.Author</td>
+            <td>@item.Book.Genre</td>
+            <td>@item.Book.PublicationYear</td>
+            <td>
+                @if (item.AverageRating is not null)
+                {
+                    @($"{item.AverageRating:0.0} / 5 ({item.RatingsCount})")
+                }
+                else
+                {
+                    <span class="text-muted">немає оцінок</span>
+                }
+            </td>
+            <td>
+                @if (isAdmin)
+                {
+                    <a asp-action="Edit" asp-route-id="@item.Book.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                    <a asp-action="Delete" asp-route-id="@item.Book.Id" class="btn btn-sm btn-outline-danger">Видалити</a>
+                }
+                else if (User.Identity?.IsAuthenticated == true)
+                {
+                    @if (item.IsInMyBooks)
+                    {
+                        <span class="badge bg-success">У моїх книгах</span>
+                    }
+                    else
+                    {
+                        <form method="post" asp-controller="MyBooks" asp-action="Add" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="bookId" value="@item.Book.Id" />
+                            <button type="submit" class="btn btn-sm btn-primary">Додати до моїх книг</button>
+                        </form>
+                    }
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

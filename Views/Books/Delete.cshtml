@@ -1,0 +1,20 @@
+@model BookTracker.Models.Book
+@{
+    ViewData["Title"] = "Видалити книгу";
+}
+
+<h1>Видалити книгу</h1>
+
+<p>Ви впевнені, що хочете видалити цю книгу?</p>
+<dl class="row">
+    <dt class="col-sm-2">Назва</dt>
+    <dd class="col-sm-10">@Model.Title</dd>
+    <dt class="col-sm-2">Автор</dt>
+    <dd class="col-sm-10">@Model.Author</dd>
+</dl>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Видалити</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Скасувати</a>
+</form>
