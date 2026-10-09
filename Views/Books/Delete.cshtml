@@ -1,20 +1,28 @@
-@model BookTracker.Models.Book
+@model Book
 @{
-    ViewData["Title"] = "Видалити книгу";
+    ViewData["Title"] = "Видалення книги";
 }
+@* Резервна сторінка підтвердження (якщо JavaScript вимкнено). Зазвичай видалення відбувається через popup-підтвердження. *@
 
-<h1>Видалити книгу</h1>
-
-<p>Ви впевнені, що хочете видалити цю книгу?</p>
-<dl class="row">
-    <dt class="col-sm-2">Назва</dt>
-    <dd class="col-sm-10">@Model.Title</dd>
-    <dt class="col-sm-2">Автор</dt>
-    <dd class="col-sm-10">@Model.Author</dd>
-</dl>
-
-<form asp-action="Delete" method="post">
-    <input type="hidden" asp-for="Id" />
-    <button type="submit" class="btn btn-danger">Видалити</button>
-    <a asp-action="Index" class="btn btn-outline-secondary">Скасувати</a>
-</form>
+<div class="bw-message-page">
+    <div class="bw-panel">
+        <div class="row g-4 align-items-center text-start">
+            <div class="col-sm-4">
+                <div class="bw-details-cover">
+                    <partial name="_BookCover" model="Model" />
+                </div>
+            </div>
+            <div class="col-sm-8">
+                <h1 class="h3 mb-2">Видалити книгу?</h1>
+                <p class="mb-1"><strong>@Model.Title</strong></p>
+                <p class="text-secondary">@Model.Author</p>
+                <p class="small">Книгу буде остаточно видалено з каталогу разом з оцінками та записами читачів. Цю дію не можна скасувати.</p>
+                <form asp-action="Delete" method="post" class="d-flex gap-2 flex-wrap">
+                    <input type="hidden" asp-for="Id" />
+                    <button type="submit" class="btn btn-danger">Так, видалити</button>
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-bw">Скасувати</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

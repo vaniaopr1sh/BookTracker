@@ -1,44 +1,22 @@
-@model BookTracker.Models.Book
+@model Book
 @{
-    ViewData["Title"] = "Редагувати книгу";
+    ViewData["Title"] = "Редагування: " + Model.Title;
 }
 
-<h1>Редагувати книгу</h1>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bw-breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Каталог</a></li>
+        <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Title</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Редагування</li>
+    </ol>
+</nav>
 
-<form asp-action="Edit" method="post">
-    <input type="hidden" asp-for="Id" />
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="mb-3">
-        <label asp-for="Title" class="form-label"></label>
-        <input asp-for="Title" class="form-control" />
-        <span asp-validation-for="Title" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="Author" class="form-label"></label>
-        <input asp-for="Author" class="form-control" />
-        <span asp-validation-for="Author" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="Genre" class="form-label"></label>
-        <input asp-for="Genre" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label asp-for="PublicationYear" class="form-label"></label>
-        <input asp-for="PublicationYear" class="form-control" />
-        <span asp-validation-for="PublicationYear" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="CoverImageUrl" class="form-label"></label>
-        <input asp-for="CoverImageUrl" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-control"></textarea>
-    </div>
-    <button type="submit" class="btn btn-primary">Зберегти</button>
-    <a asp-action="Index" class="btn btn-outline-secondary">Скасувати</a>
-</form>
+<h1 class="bw-title">Редагування книги</h1>
+<p class="bw-subtitle">Змініть потрібні поля та збережіть</p>
+
+<partial name="_BookForm" model="Model" />
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/book-form.js" asp-append-version="true"></script>
 }

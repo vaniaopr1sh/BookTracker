@@ -1,0 +1,73 @@
+@model Book
+@* Спільна форма створення / редагування книги. Валідація: атрибути моделі + jquery.validate.unobtrusive *@
+@{
+    var isEdit = Model.Id > 0;
+}
+<form asp-action="@(isEdit ? "Edit" : "Create")" method="post" class="bw-form-card" id="bwBookForm">
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Id" />
+    }
+    <div asp-validation-summary="ModelOnly" class="bw-auth-alert" role="alert"></div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label> <span class="text-danger">*</span>
+                <input asp-for="Title" class="form-control" placeholder="Напр.: Тіні забутих предків" data-bw-counter />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Author" class="form-label"></label> <span class="text-danger">*</span>
+                <input asp-for="Author" class="form-control" placeholder="Ім'я та прізвище автора" data-bw-counter />
+                <span asp-validation-for="Author" class="text-danger"></span>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-sm-7">
+                    <label asp-for="Genre" class="form-label"></label>
+                    <input asp-for="Genre" class="form-control" placeholder="Напр.: Роман" list="bwGenresList" autocomplete="off" />
+                    <datalist id="bwGenresList"></datalist>
+                    <span asp-validation-for="Genre" class="text-danger"></span>
+                </div>
+                <div class="col-sm-5">
+                    <label asp-for="PublicationYear" class="form-label"></label>
+                    <input asp-for="PublicationYear" class="form-control" placeholder="@DateTime.Now.Year" min="0" max="2100" />
+                    <span asp-validation-for="PublicationYear" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CoverImageUrl" class="form-label"></label>
+                <input asp-for="CoverImageUrl" class="form-control" placeholder="https://…/cover.jpg" type="url" />
+                <span asp-validation-for="CoverImageUrl" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="7" placeholder="Коротко про сюжет та ідею книги" data-bw-counter></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="form-label">Попередній перегляд</div>
+            <div class="bw-cover-preview">
+                <div class="bw-details-cover" id="bwCoverPreview">
+                    <img alt="" class="bw-details-img" hidden />
+                    <div class="bw-cover-placeholder">
+                        <img src="~/img/logo-reverse.png" alt="" />
+                        <div class="bw-cover-title" data-bw-preview-title>@(string.IsNullOrWhiteSpace(Model.Title) ? "Назва книги" : Model.Title)</div>
+                        <div class="bw-cover-author" data-bw-preview-author>@(string.IsNullOrWhiteSpace(Model.Author) ? "Автор" : Model.Author)</div>
+                    </div>
+                </div>
+            </div>
+            <p class="bw-auth-hint text-center mt-2 mb-0">Якщо посилання на обкладинку не вказано, буде показано фірмову заглушку BookWings.</p>
+        </div>
+    </div>
+
+    <hr class="my-4" />
+    <div class="d-flex flex-wrap gap-2 justify-content-end">
+        <a asp-action="@(isEdit ? "Details" : "Index")" asp-route-id="@(isEdit ? Model.Id.ToString() : null)" class="btn btn-outline-bw">Скасувати</a>
+        <button type="submit" class="btn btn-primary" data-loading-text="Зберігаємо…">
+            @(isEdit ? "Зберегти зміни" : "Додати книгу")
+        </button>
+    </div>
+</form>

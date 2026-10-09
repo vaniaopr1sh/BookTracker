@@ -1,42 +1,48 @@
-﻿@using Microsoft.AspNetCore.Identity
-@using BookTracker.Models
+@using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
-    if (User.IsInRole(Roles.Administrator))
-    {
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Books" asp-action="Index">Керування книгами</a>
-        </li>
-    }
-    else
-    {
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="" asp-controller="MyBooks" asp-action="Index">Мої книги</a>
-        </li>
-    }
-    <li class="nav-item">
-        <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Привіт, @(string.IsNullOrEmpty(User.Identity!.Name) ? "" : User.Identity!.Name)!</a>
-    </li>
-    <li class="nav-item">
-        <form  class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-            <button  type="submit" class="nav-link btn btn-link text-dark">Вийти</button>
-        </form>
-    </li>
+    var appUser = await UserManager.GetUserAsync(User);
+    var displayName = !string.IsNullOrWhiteSpace(appUser?.DisplayName) ? appUser!.DisplayName! : User.Identity!.Name ?? "Читач";
+    var isAdmin = User.IsInRole(Roles.Administrator);
+
+    <div class="dropdown">
+        <a href="#" class="bw-user-chip dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="bwUserMenu">
+            <span class="bw-avatar" aria-hidden="true">@displayName.Substring(0, 1)</span>
+            <span data-bw-user-name>@displayName</span>
+            @if (isAdmin)
+            {
+                <span class="bw-role-badge">адмін</span>
+            }
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bwUserMenu">
+            <li><h6 class="dropdown-header">@User.Identity!.Name</h6></li>
+            <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Мій профіль</a></li>
+            @if (isAdmin)
+            {
+                <li><a class="dropdown-item" asp-area="" asp-controller="Books" asp-action="Index">Керування каталогом</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Books" asp-action="Create">Додати книгу</a></li>
+            }
+            else
+            {
+                <li><a class="dropdown-item" asp-area="" asp-controller="MyBooks" asp-action="Index">Мої книги</a></li>
+            }
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+                @* Без JS форма працює як звичайний вихід; з JS — auth.js також очищає JWT *@
+                <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post" data-bw-logout>
+                    <button type="submit" class="dropdown-item text-danger">Вийти</button>
+                </form>
+            </li>
+        </ul>
+    </div>
 }
 else
 {
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Books" asp-action="Index">Книги</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Реєстрація</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Увійти</a>
-    </li>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-bw btn-sm" asp-area="Identity" asp-page="/Account/Login" data-bw-auth="login">Увійти</a>
+        <a class="btn btn-primary btn-sm" asp-area="Identity" asp-page="/Account/Register" data-bw-auth="register">Реєстрація</a>
+    </div>
 }
-</ul>

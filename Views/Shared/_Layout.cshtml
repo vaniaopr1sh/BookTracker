@@ -1,50 +1,144 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var isSignedIn = SignInManager.IsSignedIn(User);
+    var isAdmin = User.IsInRole(Roles.Administrator);
+    string Active(string c, string? a = null) =>
+        string.Equals(controller, c, StringComparison.OrdinalIgnoreCase)
+        && (a is null || string.Equals(action, a, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="uk">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - BookTracker</title>
+    <meta name="description" content="BookWings — книжковий портал. Книги, які дарують крила мрій." />
+    <meta name="theme-color" content="#33271B" />
+    <title>@ViewData["Title"] — BookWings</title>
+    <link rel="icon" type="image/png" href="~/img/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alata&family=Montserrat:wght@200;300;400;500;600&display=swap" />
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/BookTracker.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">BookTracker</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+<body data-authenticated="@(isSignedIn ? "true" : "false")"
+      data-open-login="@(ViewData["OpenLogin"] is true ? "true" : "false")"
+      data-return-url="@ViewData["ReturnUrl"]">
+
+    <a class="visually-hidden-focusable btn btn-primary position-absolute m-2" href="#main">Перейти до вмісту</a>
+
+    <header class="bw-header" id="bwHeader">
+        <nav class="navbar navbar-expand-lg">
+            <div class="container">
+                <a class="bw-logo" asp-area="" asp-controller="Home" asp-action="Index" aria-label="BookWings — на головну">
+                    <img src="~/img/logo.png" alt="" width="56" height="46" />
+                    <span class="bw-logo-text">BookWings<small>Книги, які дарують крила мрій</small></span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#bwNavbar"
+                        aria-controls="bwNavbar" aria-expanded="false" aria-label="Відкрити меню">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="collapse navbar-collapse" id="bwNavbar">
+                    <ul class="navbar-nav bw-nav mx-lg-auto">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link @Active("Home", "Index")" asp-area="" asp-controller="Home" asp-action="Index">Головна</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link @(Active("Books") != "" && action != "Create" ? "active" : "")" asp-area="" asp-controller="Books" asp-action="Index">Каталог</a>
+                        </li>
+                        @if (isAdmin)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @Active("Books", "Create")" asp-area="" asp-controller="Books" asp-action="Create">Додати книгу</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @Active("MyBooks")" asp-area="" asp-controller="MyBooks" asp-action="Index" data-requires-auth>Мої книги</a>
+                            </li>
+                        }
+                        <li class="nav-item">
+                            <a class="nav-link @Active("Home", "Privacy")" asp-area="" asp-controller="Home" asp-action="Privacy">Про нас</a>
                         </li>
                     </ul>
-                    <partial name="_LoginPartial" />
+                    <div class="bw-header-actions">
+                        <partial name="_LoginPartial" />
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - BookTracker - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main role="main" id="main" class="@(ViewData["FullWidth"] is true ? "" : "container pt-4")">
+        @RenderBody()
+    </main>
+
+    <footer class="bw-footer">
+        <svg class="bw-wave bw-wave--dark" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,60 C240,10 480,0 760,30 C1040,60 1240,80 1440,40 L1440,90 L0,90 Z" />
+        </svg>
+        <div class="bw-footer-body">
+            <div class="container">
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <img src="~/img/logo-reverse.png" class="bw-footer-logo mb-2" alt="Логотип BookWings" />
+                        <div class="bw-logo-text text-start" style="color: var(--bw-olive)">BookWings</div>
+                        <p class="bw-footer-slogan mt-2 mb-0">Книги, які дарують крила мрій</p>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <h6>Портал</h6>
+                        <ul>
+                            <li><a asp-area="" asp-controller="Home" asp-action="Index">Головна</a></li>
+                            <li><a asp-area="" asp-controller="Books" asp-action="Index">Каталог книг</a></li>
+                            <li><a asp-area="" asp-controller="Home" asp-action="Privacy">Про нас</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <h6>Контакти</h6>
+                        <ul>
+                            <li><a href="tel:+380965696135">096 569 61 35</a></li>
+                            <li><a href="tel:+380506784936">050 678 49 36</a></li>
+                            <li><a href="tel:+380935867473">093 586 74 73</a></li>
+                            <li>м. Київ, вул. Книжна 15, буд. 4/2</li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-3">
+                        <h6>Години роботи</h6>
+                        <ul>
+                            <li>з 8:00 до 22:00</li>
+                            <li>Без вихідних</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bw-footer-bottom d-flex flex-wrap justify-content-between gap-2">
+                    <span>&copy; @DateTime.Now.Year BookWings. Усі права захищено.</span>
+                    <span>www.bookwings.org</span>
+                </div>
+            </div>
         </div>
     </footer>
+
+    @if (!isSignedIn)
+    {
+        <partial name="_AuthModal" />
+    }
+    <partial name="_ConfirmModal" />
+
+    <div class="bw-toast-container" id="bwToasts" aria-live="polite" aria-atomic="false"></div>
+    @if (TempData["Toast"] is string toast)
+    {
+        <div hidden data-bw-toast="@toast"></div>
+    }
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/auth.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

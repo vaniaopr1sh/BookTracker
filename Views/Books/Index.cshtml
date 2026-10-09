@@ -1,78 +1,80 @@
-@model List<BookTracker.ViewModels.BookListItemViewModel>
-@using BookTracker.Models
+@model BookTracker.ViewModels.CatalogViewModel
+@using BookTracker.ViewModels
 @{
-    ViewData["Title"] = "Книги";
+    ViewData["Title"] = "Каталог книг";
     var isAdmin = User.IsInRole(Roles.Administrator);
 }
 
-<h1>Каталог книг</h1>
+<div class="bw-section-head">
+    <div>
+        <h1 class="bw-title">Каталог книг</h1>
+        <p class="bw-subtitle mb-0">Знайдіть історію, яка подарує вам крила</p>
+    </div>
+    @if (isAdmin)
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            Додати книгу
+        </a>
+    }
+</div>
 
-<form method="get" class="row g-2 mb-3">
-    <div class="col-auto">
-        <input type="text" name="search" value="@ViewData["Search"]" class="form-control" placeholder="Пошук за назвою або автором" />
+<form method="get" asp-action="Index" class="bw-catalog-toolbar" id="bwCatalogFilters" role="search">
+    <div class="row g-2 align-items-center">
+        <div class="col-md-7 col-lg-8">
+            <label for="bwSearch" class="visually-hidden">Пошук</label>
+            <div class="bw-input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                <input type="search" id="bwSearch" name="search" value="@Model.Search" class="form-control"
+                       placeholder="Пошук за назвою або автором…" autocomplete="off" maxlength="100" />
+            </div>
+        </div>
+        <div class="col-8 col-md-3 col-lg-3">
+            <label for="bwSort" class="visually-hidden">Сортування</label>
+            <select id="bwSort" name="sort" class="form-select">
+                @foreach (var option in CatalogSort.Options)
+                {
+                    <option value="@option.Key" selected="@(Model.Sort == option.Key)">@option.Value</option>
+                }
+            </select>
+        </div>
+        <div class="col-4 col-md-2 col-lg-1 d-grid">
+            <button type="submit" class="btn btn-primary" data-bw-nojs-submit>Знайти</button>
+        </div>
     </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary">Пошук</button>
-    </div>
+    <input type="hidden" name="genre" value="@Model.Genre" id="bwGenre" />
 </form>
 
-@if (isAdmin)
+@if (Model.Genres.Any())
 {
-    <p><a asp-action="Create" class="btn btn-primary">Додати книгу</a></p>
+    <div class="bw-genre-chips" role="group" aria-label="Фільтр за жанром">
+        <a asp-action="Index" asp-route-search="@Model.Search" asp-route-sort="@Model.Sort"
+           class="bw-chip @(string.IsNullOrEmpty(Model.Genre) ? "active" : "")" data-bw-genre="">Усі жанри</a>
+        @foreach (var genre in Model.Genres)
+        {
+            <a asp-action="Index" asp-route-genre="@genre" asp-route-search="@Model.Search" asp-route-sort="@Model.Sort"
+               class="bw-chip @(Model.Genre == genre ? "active" : "")" data-bw-genre="@genre">@genre</a>
+        }
+    </div>
 }
 
-<table class="table table-striped align-middle">
-    <thead>
-        <tr>
-            <th>Назва</th>
-            <th>Автор</th>
-            <th>Жанр</th>
-            <th>Рік</th>
-            <th>Рейтинг</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var item in Model)
-    {
-        <tr>
-            <td><a asp-action="Details" asp-route-id="@item.Book.Id">@item.Book.Title</a></td>
-            <td>@item.Book.Author</td>
-            <td>@item.Book.Genre</td>
-            <td>@item.Book.PublicationYear</td>
-            <td>
-                @if (item.AverageRating is not null)
-                {
-                    @($"{item.AverageRating:0.0} / 5 ({item.RatingsCount})")
-                }
-                else
-                {
-                    <span class="text-muted">немає оцінок</span>
-                }
-            </td>
-            <td>
-                @if (isAdmin)
-                {
-                    <a asp-action="Edit" asp-route-id="@item.Book.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
-                    <a asp-action="Delete" asp-route-id="@item.Book.Id" class="btn btn-sm btn-outline-danger">Видалити</a>
-                }
-                else if (User.Identity?.IsAuthenticated == true)
-                {
-                    @if (item.IsInMyBooks)
-                    {
-                        <span class="badge bg-success">У моїх книгах</span>
-                    }
-                    else
-                    {
-                        <form method="post" asp-controller="MyBooks" asp-action="Add" class="d-inline">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="bookId" value="@item.Book.Id" />
-                            <button type="submit" class="btn btn-sm btn-primary">Додати до моїх книг</button>
-                        </form>
-                    }
-                }
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
+<div class="bw-grid-wrapper" id="bwCatalogResults" aria-live="polite" aria-busy="false">
+    <partial name="_BookGrid" model="Model" />
+</div>
+
+<template id="bwSkeletonTemplate">
+    <div class="bw-grid">
+        @for (var i = 0; i < 8; i++)
+        {
+            <div class="bw-skeleton" aria-hidden="true">
+                <div class="bw-skeleton-cover"></div>
+                <div class="bw-skeleton-line"></div>
+                <div class="bw-skeleton-line short"></div>
+            </div>
+        }
+    </div>
+</template>
+
+@section Scripts {
+    <script src="~/js/catalog.js" asp-append-version="true"></script>
+}

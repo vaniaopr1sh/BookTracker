@@ -1,0 +1,13 @@
+@{
+    ViewData["Title"] = "Доступ обмежено";
+}
+
+<div class="bw-message-page">
+    <div class="bw-code">403</div>
+    <h1 class="h3 mt-2">Доступ до цього розділу обмежено</h1>
+    <p class="text-secondary">Ця сторінка доступна лише користувачам з відповідною роллю. Якщо ви вважаєте, що це помилка, зверніться до адміністратора.</p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary">На головну</a>
+        <a asp-controller="Books" asp-action="Index" class="btn btn-outline-bw">До каталогу</a>
+    </div>
+</div>

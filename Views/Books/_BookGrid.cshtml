@@ -1,0 +1,51 @@
+@model BookTracker.ViewModels.CatalogViewModel
+@* Сітка карток каталогу. Рендериться і в Index, і окремо — у відповідь на AJAX-пошук *@
+
+<div class="bw-result-info" data-bw-result-info>
+    @if (Model.HasFilters)
+    {
+        <text>Знайдено <strong>@Model.Books.Count</strong> з @Model.TotalCount книг</text>
+    }
+    else
+    {
+        <text>У каталозі <strong>@Model.Books.Count</strong> книг</text>
+    }
+</div>
+
+@if (Model.TotalCount == 0)
+{
+    <div class="bw-empty">
+        <img src="~/img/alata.jpg" alt="Книжкова фея Алата" />
+        <h3>Каталог поки що порожній</h3>
+        <p>Алата ще не встигла розставити книги на полицях. Зазирніть трохи згодом!</p>
+        @if (User.IsInRole(Roles.Administrator))
+        {
+            <a asp-action="Create" class="btn btn-primary">Додати першу книгу</a>
+        }
+    </div>
+}
+else if (!Model.Books.Any())
+{
+    <div class="bw-empty">
+        <img src="~/img/alata.jpg" alt="Книжкова фея Алата" />
+        <h3>Нічого не знайдено</h3>
+        <p>
+            За запитом
+            @if (!string.IsNullOrWhiteSpace(Model.Search)) { <strong>«@Model.Search»</strong> }
+            @if (!string.IsNullOrWhiteSpace(Model.Genre)) { <span>у жанрі <strong>@Model.Genre</strong></span> }
+            книг не знайдено. Спробуйте змінити пошук або скинути фільтри.
+        </p>
+        <a asp-action="Index" class="btn btn-outline-bw" data-bw-reset-filters>Скинути фільтри</a>
+    </div>
+}
+else
+{
+    <div class="bw-grid">
+        @foreach (var item in Model.Books)
+        {
+            <div data-bw-book="@item.Book.Id">
+                <partial name="_BookCard" model="item" />
+            </div>
+        }
+    </div>
+}

@@ -19,16 +19,24 @@ public class BooksController : Controller
         _userManager = userManager;
     }
 
-    // GET: /Books?search=...
-    public async Task<IActionResult> Index(string? search)
+    // GET: /Books?search=...&genre=...&sort=...
+    // Для AJAX-запитів (живий пошук у каталозі) повертає лише сітку карток.
+    public async Task<IActionResult> Index(string? search, string? genre, string? sort)
     {
+        sort = sort is not null && CatalogSort.Options.ContainsKey(sort) ? sort : CatalogSort.Title;
+        search = search?.Trim();
+
         var query = _context.Books.AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
         {
             query = query.Where(b => b.Title.Contains(search) || b.Author.Contains(search));
         }
+        if (!string.IsNullOrWhiteSpace(genre))
+        {
+            query = query.Where(b => b.Genre == genre);
+        }
 
-        var books = await query.OrderBy(b => b.Title).ToListAsync();
+        var books = await query.ToListAsync();
         var userId = _userManager.GetUserId(User);
 
         var ratingStats = await _context.Ratings
@@ -40,15 +48,43 @@ public class BooksController : Controller
             ? new HashSet<int>()
             : (await _context.UserBooks.Where(ub => ub.UserId == userId).Select(ub => ub.BookId).ToListAsync()).ToHashSet();
 
-        var model = books.Select(b => new BookListItemViewModel
+        var items = books.Select(b => new BookListItemViewModel
         {
             Book = b,
             AverageRating = ratingStats.TryGetValue(b.Id, out var stat) ? stat.Avg : null,
             RatingsCount = ratingStats.TryGetValue(b.Id, out var stat2) ? stat2.Count : 0,
             IsInMyBooks = myBookIds.Contains(b.Id)
-        }).ToList();
+        });
 
-        ViewData["Search"] = search;
+        items = sort switch
+        {
+            CatalogSort.Author => items.OrderBy(i => i.Book.Author).ThenBy(i => i.Book.Title),
+            CatalogSort.YearDesc => items.OrderByDescending(i => i.Book.PublicationYear ?? int.MinValue),
+            CatalogSort.YearAsc => items.OrderBy(i => i.Book.PublicationYear ?? int.MaxValue),
+            CatalogSort.Rating => items.OrderByDescending(i => i.AverageRating ?? 0).ThenByDescending(i => i.RatingsCount),
+            _ => items.OrderBy(i => i.Book.Title)
+        };
+
+        var model = new CatalogViewModel
+        {
+            Books = items.ToList(),
+            Search = search,
+            Genre = genre,
+            Sort = sort,
+            TotalCount = await _context.Books.CountAsync(),
+            Genres = await _context.Books
+                .Where(b => b.Genre != null && b.Genre != "")
+                .Select(b => b.Genre!)
+                .Distinct()
+                .OrderBy(g => g)
+                .ToListAsync()
+        };
+
+        if (Request.Headers.XRequestedWith == "XMLHttpRequest")
+        {
+            return PartialView("_BookGrid", model);
+        }
+
         return View(model);
     }
 
@@ -81,7 +117,7 @@ public class BooksController : Controller
 
     // GET: /Books/Create
     [Authorize(Roles = Roles.Administrator)]
-    public IActionResult Create() => View();
+    public IActionResult Create() => View(new Book());
 
     // POST: /Books/Create
     [HttpPost]
@@ -93,7 +129,8 @@ public class BooksController : Controller
 
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        TempData["Toast"] = $"Книгу «{book.Title}» додано до каталогу";
+        return RedirectToAction(nameof(Details), new { id = book.Id });
     }
 
     // GET: /Books/Edit/5
@@ -114,9 +151,15 @@ public class BooksController : Controller
         if (id != book.Id) return NotFound();
         if (!ModelState.IsValid) return View(book);
 
+        if (!await _context.Books.AnyAsync(b => b.Id == id))
+        {
+            return NotFound();
+        }
+
         _context.Update(book);
         await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        TempData["Toast"] = $"Зміни у книзі «{book.Title}» збережено";
+        return RedirectToAction(nameof(Details), new { id = book.Id });
     }
 
     // GET: /Books/Delete/5
@@ -139,6 +182,7 @@ public class BooksController : Controller
         {
             _context.Books.Remove(book);
             await _context.SaveChangesAsync();
+            TempData["Toast"] = $"Книгу «{book.Title}» видалено";
         }
         return RedirectToAction(nameof(Index));
     }

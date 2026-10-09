@@ -1,0 +1,59 @@
+@model BookTracker.ViewModels.BookListItemViewModel
+@{
+    var book = Model.Book;
+    var isAdmin = User.IsInRole(Roles.Administrator);
+    var isSignedIn = User.Identity?.IsAuthenticated == true;
+}
+<article class="bw-book-card">
+    <a class="bw-book-card-link" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">
+        <div class="bw-cover">
+            @if (!string.IsNullOrWhiteSpace(book.Genre))
+            {
+                <span class="bw-cover-genre">@book.Genre</span>
+            }
+            @if (Model.IsInMyBooks)
+            {
+                <span class="bw-in-list-badge">На полиці</span>
+            }
+            <partial name="_BookCover" model="book" />
+        </div>
+        <div class="bw-book-body">
+            <h3 class="bw-book-title">@book.Title</h3>
+            <div class="bw-book-author">@book.Author</div>
+            <div class="bw-book-meta">
+                <span>
+                    <partial name="_Stars" model="Model.AverageRating" />
+                    @if (Model.RatingsCount > 0)
+                    {
+                        <small class="ms-1">@Model.AverageRating?.ToString("0.0")</small>
+                    }
+                </span>
+                @if (book.PublicationYear is not null)
+                {
+                    <span>@book.PublicationYear р.</span>
+                }
+            </div>
+        </div>
+    </a>
+
+    @if (isAdmin)
+    {
+        <div class="bw-book-actions">
+            <a asp-controller="Books" asp-action="Edit" asp-route-id="@book.Id" class="btn btn-sm btn-outline-bw flex-fill">Редагувати</a>
+            <a asp-controller="Books" asp-action="Delete" asp-route-id="@book.Id" class="btn btn-sm btn-outline-danger"
+               data-bw-delete-book data-id="@book.Id" data-title="@book.Title" aria-label="Видалити «@book.Title»">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" /></svg>
+            </a>
+        </div>
+    }
+    else if (isSignedIn && !Model.IsInMyBooks)
+    {
+        <div class="bw-book-actions">
+            <form method="post" asp-controller="MyBooks" asp-action="Add">
+                <input type="hidden" name="bookId" value="@book.Id" />
+                <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                <button type="submit" class="btn btn-sm btn-olive w-100">+ На мою полицю</button>
+            </form>
+        </div>
+    }
+</article>

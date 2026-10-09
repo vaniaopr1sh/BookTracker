@@ -1,11 +1,158 @@
+@model BookTracker.ViewModels.HomeViewModel
 @{
     ViewData["Title"] = "Головна";
+    ViewData["FullWidth"] = true;
+    ViewData["OpenLogin"] = Model.OpenLogin;
+    ViewData["ReturnUrl"] = Model.ReturnUrl;
 }
 
-<div class="text-center">
-    <h1 class="display-4">BookTracker</h1>
-    <p class="lead">Веб-застосунок для обліку прочитаних книг: переглядайте каталог, додавайте книги до свого списку, відстежуйте статус читання та залишайте оцінки.</p>
-    <p>
-        <a asp-controller="Books" asp-action="Index" class="btn btn-primary btn-lg">Перейти до каталогу книг</a>
-    </p>
+@* ---------- Hero ---------- *@
+<section class="bw-hero text-center">
+    <div class="container">
+        <img src="~/img/logo.png" alt="Логотип BookWings" class="bw-hero-logo" width="320" height="262" />
+        <h1 class="bw-hero-name">BookWings</h1>
+        <p class="bw-hero-slogan">Книги, які дарують крила мрій</p>
+
+        <form asp-controller="Books" asp-action="Index" method="get" class="bw-hero-search" role="search">
+            <label for="heroSearch" class="visually-hidden">Пошук книги</label>
+            <input id="heroSearch" type="search" name="search" class="form-control" placeholder="Назва книги або автор…" maxlength="100" />
+            <button type="submit" class="btn btn-primary">Знайти</button>
+        </form>
+
+        <div class="d-flex justify-content-center flex-wrap gap-2">
+            <a asp-controller="Books" asp-action="Index" class="btn btn-outline-bw">Переглянути каталог</a>
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-olive" data-bw-auth="register">Приєднатися до спільноти</a>
+            }
+        </div>
+    </div>
+
+    <svg class="bw-wave bw-hero-wave" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,70 C180,10 360,0 560,40 C760,80 900,110 1100,80 C1260,56 1360,30 1440,40 L1440,120 L0,120 Z" />
+    </svg>
+</section>
+
+@* ---------- Статистика ---------- *@
+<section class="bw-stats">
+    <div class="container">
+        <div class="row g-3">
+            <div class="col-4 bw-stat">
+                <div class="bw-stat-value">@Model.BooksCount</div>
+                <div class="bw-stat-label">книг у каталозі</div>
+            </div>
+            <div class="col-4 bw-stat">
+                <div class="bw-stat-value">@Model.GenresCount</div>
+                <div class="bw-stat-label">жанрів</div>
+            </div>
+            <div class="col-4 bw-stat">
+                <div class="bw-stat-value">@Model.ReadersCount</div>
+                <div class="bw-stat-label">читачів</div>
+            </div>
+        </div>
+    </div>
+</section>
+<svg class="bw-wave" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true" style="transform: scaleY(-1)">
+    <path d="M0,40 C240,0 520,10 760,35 C1000,60 1220,60 1440,20 L1440,70 L0,70 Z" />
+</svg>
+
+<div class="container">
+    @* ---------- Новинки ---------- *@
+    <section class="bw-section bw-reveal" aria-labelledby="latestTitle">
+        <div class="bw-section-head">
+            <div>
+                <h2 class="bw-title" id="latestTitle">Нові надходження</h2>
+                <p class="bw-subtitle mb-0">Останні книги, що з'явилися на наших полицях</p>
+            </div>
+            <a asp-controller="Books" asp-action="Index" class="btn btn-outline-bw">Увесь каталог &rarr;</a>
+        </div>
+
+        @if (Model.LatestBooks.Any())
+        {
+            <div class="bw-grid">
+                @foreach (var item in Model.LatestBooks)
+                {
+                    <div data-bw-book="@item.Book.Id">
+                        <partial name="_BookCard" model="item" />
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="bw-empty">
+                <img src="~/img/alata.jpg" alt="Книжкова фея Алата" />
+                <h3>Полиці ще порожні</h3>
+                <p>Скоро тут з'являться перші книги.</p>
+            </div>
+        }
+    </section>
+
+    @* ---------- Переваги ---------- *@
+    <section class="bw-section bw-reveal" aria-labelledby="featuresTitle">
+        <h2 class="bw-title text-center" id="featuresTitle">Що вас чекає у BookWings</h2>
+        <p class="bw-subtitle text-center">Сучасний, зручний та дружній цифровий простір для читачів</p>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="bw-feature">
+                    <div class="bw-feature-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                    </div>
+                    <h3 class="h5">Зручний пошук</h3>
+                    <p class="text-secondary">Шукайте за назвою чи автором, фільтруйте за жанром і сортуйте за рейтингом.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bw-feature">
+                    <div class="bw-feature-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 5c3 0 6 .7 10 3v12c-4-2.3-7-3-10-3zM22 5c-3 0-6 .7-10 3v12c4-2.3 7-3 10-3z" /></svg>
+                    </div>
+                    <h3 class="h5">Власна полиця</h3>
+                    <p class="text-secondary">Додавайте книги до списку «Хочу прочитати», «Читаю» чи «Прочитано».</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bw-feature">
+                    <div class="bw-feature-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z" /></svg>
+                    </div>
+                    <h3 class="h5">Оцінки читачів</h3>
+                    <p class="text-secondary">Ставте оцінки прочитаним книгам і знаходьте найкращі історії разом зі спільнотою.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Філософія ---------- *@
+    <section class="bw-section bw-reveal" aria-labelledby="philosophyTitle">
+        <div class="bw-philosophy">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-7">
+                    <h2 class="bw-title" id="philosophyTitle">Філософія BookWings</h2>
+                    <p>Книга — це більше, ніж джерело знань. Це простір ідей, натхнення та нових можливостей. Наш книжковий портал створений для того, щоб об'єднати людей, які люблять читати, відкривати нові історії та ділитися враженнями.</p>
+                    <p class="mb-0">Ми не просто пропонуємо книги — ми створюємо спільноту людей, яких об'єднує цікавість до світу, бажання навчатися та натхнення від читання.</p>
+                </div>
+                <div class="col-lg-5 text-center">
+                    <span class="bw-philosophy-quote">крила мрій</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ---------- Персонаж ---------- *@
+    <section class="bw-section bw-reveal" aria-labelledby="alataTitle">
+        <div class="bw-alata">
+            <div class="row g-0 align-items-center">
+                <div class="col-md-6 p-4 p-lg-5">
+                    <h2 class="bw-alata-name" id="alataTitle">Alata</h2>
+                    <p class="bw-alata-role">Книжкова фея<br />Хранителька крилатих мрій</p>
+                    <p class="mb-4">Кажуть, що десь поміж сторінками книг існує чарівний світ. Там живе Алата — вона допомагає читачам знаходити саме ті історії, яких потребує їхнє серце. Комусь дарує сміливість, комусь — натхнення, а комусь просто нагадує, що мріяти ніколи не пізно.</p>
+                    <a asp-controller="Home" asp-action="Privacy" asp-fragment="alata" class="btn btn-outline-light-bw">Історія Алати</a>
+                </div>
+                <div class="col-md-6 text-center p-4">
+                    <img src="~/img/alata.jpg" alt="Книжкова фея Алата читає книгу на гойдалці" loading="lazy" />
+                </div>
+            </div>
+        </div>
+    </section>
 </div>

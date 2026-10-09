@@ -1,0 +1,96 @@
+@* Popup Login / Registration. Форми надсилаються через fetch до /api/auth/* (див. wwwroot/js/auth.js) *@
+<div class="modal fade bw-auth-modal" id="bwAuthModal" tabindex="-1" aria-labelledby="bwAuthTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="row g-0">
+                <div class="col-md-5 d-none d-md-block">
+                    <div class="bw-auth-aside">
+                        <img src="~/img/logo-reverse.png" alt="" />
+                        <div class="bw-auth-brand">BookWings</div>
+                        <p>Книги, які дарують крила мрій.<br />Створюйте власну полицю, відстежуйте прочитане та діліться враженнями.</p>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="bw-auth-body">
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Закрити"></button>
+                        <h2 class="h4 mb-3" id="bwAuthTitle">Ласкаво просимо!</h2>
+
+                        <div class="bw-auth-tabs" role="tablist">
+                            <button type="button" class="active" role="tab" data-bw-tab="login" aria-selected="true">Вхід</button>
+                            <button type="button" role="tab" data-bw-tab="register" aria-selected="false">Реєстрація</button>
+                        </div>
+
+                        @* ---------- Вхід ---------- *@
+                        <form class="bw-auth-pane active" data-bw-pane="login" id="bwLoginForm" novalidate>
+                            <div class="bw-auth-alert d-none" role="alert" data-bw-alert></div>
+                            <div class="mb-3">
+                                <label class="form-label" for="loginEmail">Email</label>
+                                <input class="form-control" id="loginEmail" name="email" type="email" autocomplete="username"
+                                       placeholder="name@example.com" required data-msg-required="Вкажіть email" data-msg-email="Некоректний email" />
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label" for="loginPassword">Пароль</label>
+                                <div class="bw-password">
+                                    <input class="form-control" id="loginPassword" name="password" type="password" autocomplete="current-password"
+                                           placeholder="Ваш пароль" required data-msg-required="Вкажіть пароль" />
+                                    <button type="button" class="bw-password-toggle" data-bw-toggle-password aria-label="Показати пароль">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                                    </button>
+                                </div>
+                                <div class="invalid-feedback d-block"></div>
+                            </div>
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="loginRemember" name="rememberMe" />
+                                <label class="form-check-label" for="loginRemember">Запам'ятати мене</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">Увійти</button>
+                            <p class="bw-auth-hint text-center mt-3 mb-0">Немає облікового запису? <a href="#" data-bw-tab="register">Зареєструватися</a></p>
+                        </form>
+
+                        @* ---------- Реєстрація ---------- *@
+                        <form class="bw-auth-pane" data-bw-pane="register" id="bwRegisterForm" novalidate>
+                            <div class="bw-auth-alert d-none" role="alert" data-bw-alert></div>
+                            <div class="mb-3">
+                                <label class="form-label" for="regName">Ім'я</label>
+                                <input class="form-control" id="regName" name="displayName" type="text" autocomplete="name"
+                                       placeholder="Як до вас звертатися?" required minlength="2" maxlength="100"
+                                       data-msg-required="Вкажіть ім'я" data-msg-minlength="Ім'я має містити щонайменше 2 символи" />
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="regEmail">Email</label>
+                                <input class="form-control" id="regEmail" name="email" type="email" autocomplete="username"
+                                       placeholder="name@example.com" required data-msg-required="Вкажіть email" data-msg-email="Некоректний email" />
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="regPassword">Пароль</label>
+                                <div class="bw-password">
+                                    <input class="form-control" id="regPassword" name="password" type="password" autocomplete="new-password"
+                                           placeholder="Щонайменше 6 символів" required minlength="6"
+                                           data-msg-required="Вкажіть пароль" data-msg-minlength="Пароль має містити щонайменше 6 символів" />
+                                    <button type="button" class="bw-password-toggle" data-bw-toggle-password aria-label="Показати пароль">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                                    </button>
+                                </div>
+                                <div class="bw-password-strength" aria-hidden="true"><span data-bw-strength></span></div>
+                                <div class="bw-auth-hint mt-1">Використайте великі й малі літери, цифру та спецсимвол.</div>
+                                <div class="invalid-feedback d-block"></div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label" for="regConfirm">Повторіть пароль</label>
+                                <input class="form-control" id="regConfirm" name="confirmPassword" type="password" autocomplete="new-password"
+                                       placeholder="Ще раз пароль" required data-match="regPassword"
+                                       data-msg-required="Повторіть пароль" data-msg-match="Паролі не збігаються" />
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">Створити обліковий запис</button>
+                            <p class="bw-auth-hint text-center mt-3 mb-0">Вже з нами? <a href="#" data-bw-tab="login">Увійти</a></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

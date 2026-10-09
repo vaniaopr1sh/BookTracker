@@ -1,0 +1,16 @@
+@* Універсальне вікно підтвердження критичних дій (видалення тощо). Керується з site.js: BookWings.confirm({...}) *@
+<div class="modal fade" id="bwConfirmModal" tabindex="-1" aria-labelledby="bwConfirmTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body p-4 text-center">
+                <img src="~/img/wings.png" alt="" width="90" class="mb-3" />
+                <h2 class="h5 mb-2" id="bwConfirmTitle">Підтвердіть дію</h2>
+                <p class="mb-4 text-secondary" data-bw-confirm-text>Ви впевнені?</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-outline-bw" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="button" class="btn btn-danger" data-bw-confirm-ok>Підтвердити</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

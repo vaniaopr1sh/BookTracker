@@ -1,66 +1,146 @@
 @model BookTracker.ViewModels.BookDetailsViewModel
-@using BookTracker.Models
 @{
     ViewData["Title"] = Model.Book.Title;
+    var book = Model.Book;
+    var isAdmin = User.IsInRole(Roles.Administrator);
+    var isSignedIn = User.Identity?.IsAuthenticated == true;
+    var returnUrl = Url.Action("Details", "Books", new { id = book.Id });
 }
 
-<h1>@Model.Book.Title</h1>
-@if (!string.IsNullOrWhiteSpace(Model.Book.CoverImageUrl))
-{
-    <img src="@Model.Book.CoverImageUrl" alt="Обкладинка книги «@Model.Book.Title»" class="img-thumbnail mb-3" style="max-height:300px;" />
-}
-<p><strong>Автор:</strong> @Model.Book.Author</p>
-@if (Model.Book.Genre is not null) { <p><strong>Жанр:</strong> @Model.Book.Genre</p> }
-@if (Model.Book.PublicationYear is not null) { <p><strong>Рік видання:</strong> @Model.Book.PublicationYear</p> }
-@if (Model.Book.Description is not null) { <p>@Model.Book.Description</p> }
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bw-breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Головна</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Каталог</a></li>
+        @if (!string.IsNullOrWhiteSpace(book.Genre))
+        {
+            <li class="breadcrumb-item"><a asp-action="Index" asp-route-genre="@book.Genre">@book.Genre</a></li>
+        }
+        <li class="breadcrumb-item active" aria-current="page">@book.Title</li>
+    </ol>
+</nav>
 
-<p>
-    <strong>Середня оцінка:</strong>
-    @(Model.AverageRating is not null ? $"{Model.AverageRating:0.0} / 5 ({Model.RatingsCount} оцінок)" : "немає оцінок")
-</p>
+<div class="row g-4 g-lg-5">
+    <div class="col-sm-6 col-md-4 col-lg-3 mx-auto mx-md-0">
+        <div class="bw-details-cover">
+            <partial name="_BookCover" model="book" />
+        </div>
+    </div>
 
-@if (User.Identity?.IsAuthenticated == true && !User.IsInRole(Roles.Administrator))
-{
-    <hr />
-    <h4>Мій статус читання</h4>
-    @if (Model.MyStatus is null)
-    {
-        <form method="post" asp-controller="MyBooks" asp-action="Add">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="bookId" value="@Model.Book.Id" />
-            <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Books", new { id = Model.Book.Id })" />
-            <button type="submit" class="btn btn-primary">Додати до моїх книг</button>
-        </form>
-    }
-    else
-    {
-        <form method="post" asp-controller="MyBooks" asp-action="UpdateStatus" class="d-flex align-items-center gap-2">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="userBookId" value="@Model.MyUserBookId" />
-            <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Books", new { id = Model.Book.Id })" />
-            <select name="status" class="form-select w-auto">
-                @foreach (ReadingStatus s in Enum.GetValues(typeof(ReadingStatus)))
+    <div class="col-md-8 col-lg-5">
+        <h1 class="bw-details-title">@book.Title</h1>
+        <div class="bw-details-author">@book.Author</div>
+
+        <ul class="bw-meta-list">
+            @if (!string.IsNullOrWhiteSpace(book.Genre))
+            {
+                <li><span>Жанр</span>@book.Genre</li>
+            }
+            @if (book.PublicationYear is not null)
+            {
+                <li><span>Рік видання</span>@book.PublicationYear</li>
+            }
+            <li><span>Оцінок</span>@Model.RatingsCount</li>
+        </ul>
+
+        <h2 class="h5 mb-2">Про книгу</h2>
+        @if (!string.IsNullOrWhiteSpace(book.Description))
+        {
+            <p class="bw-description">@book.Description</p>
+        }
+        else
+        {
+            <p class="text-secondary fst-italic">Опис цієї книги ще не додано.</p>
+        }
+
+        @if (isAdmin)
+        {
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a asp-action="Edit" asp-route-id="@book.Id" class="btn btn-primary">Редагувати</a>
+                <a asp-action="Delete" asp-route-id="@book.Id" class="btn btn-outline-danger"
+                   data-bw-delete-book data-id="@book.Id" data-title="@book.Title" data-redirect="@Url.Action("Index")">Видалити</a>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <section class="bw-panel" aria-labelledby="ratingTitle">
+            <h2 class="bw-panel-title" id="ratingTitle">Рейтинг читачів</h2>
+            <div class="bw-rating-big">
+                <span class="bw-rating-value">@(Model.AverageRating?.ToString("0.0") ?? "—")</span>
+                <div>
+                    <partial name="_Stars" model="Model.AverageRating" />
+                    <div class="small text-secondary mt-1">
+                        @(Model.RatingsCount > 0 ? $"на основі {Model.RatingsCount} оцінок" : "ще ніхто не оцінив")
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @if (!isSignedIn)
+        {
+            <section class="bw-panel text-center">
+                <img src="~/img/wings.png" alt="" width="70" class="mb-2" />
+                <p class="mb-3">Увійдіть, щоб додати книгу на свою полицю та поставити оцінку.</p>
+                <button type="button" class="btn btn-primary" data-bw-auth="login" data-return-url="@returnUrl">Увійти</button>
+            </section>
+        }
+        else if (!isAdmin)
+        {
+            <section class="bw-panel" aria-labelledby="shelfTitle">
+                <h2 class="bw-panel-title" id="shelfTitle">Моя полиця</h2>
+                @if (Model.MyStatus is null)
                 {
-                    <option value="@s" selected="@(Model.MyStatus == s)">@s.GetDisplayName()</option>
+                    <p class="text-secondary small">Цієї книги ще немає у вашому списку.</p>
+                    <form method="post" asp-controller="MyBooks" asp-action="Add">
+                        <input type="hidden" name="bookId" value="@book.Id" />
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <button type="submit" class="btn btn-olive w-100">+ Додати на мою полицю</button>
+                    </form>
                 }
-            </select>
-            <button type="submit" class="btn btn-outline-primary">Оновити статус</button>
-        </form>
-
-        <h4 class="mt-4">Моя оцінка</h4>
-        <form method="post" asp-controller="MyBooks" asp-action="Rate" class="d-flex align-items-center gap-2">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="bookId" value="@Model.Book.Id" />
-            <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Books", new { id = Model.Book.Id })" />
-            <select name="value" class="form-select w-auto">
-                @for (int i = 1; i <= 5; i++)
+                else
                 {
-                    <option value="@i" selected="@(Model.MyRating == i)">@i</option>
-                }
-            </select>
-            <button type="submit" class="btn btn-outline-success">Оцінити</button>
-        </form>
-    }
-}
+                    <form method="post" asp-controller="MyBooks" asp-action="UpdateStatus" data-bw-autosubmit>
+                        <input type="hidden" name="userBookId" value="@Model.MyUserBookId" />
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <fieldset class="bw-status-group">
+                            <legend class="visually-hidden">Статус читання</legend>
+                            @foreach (ReadingStatus s in Enum.GetValues(typeof(ReadingStatus)))
+                            {
+                                <input type="radio" name="status" id="status-@s" value="@s" checked="@(Model.MyStatus == s)" />
+                                <label for="status-@s">@s.GetDisplayName()</label>
+                            }
+                        </fieldset>
+                        <noscript><button type="submit" class="btn btn-sm btn-outline-bw mt-2">Оновити статус</button></noscript>
+                    </form>
 
-<p class="mt-3"><a asp-action="Index">Назад до каталогу</a></p>
+                    <h3 class="bw-panel-title mt-4 mb-2" id="myRatingTitle">Моя оцінка</h3>
+                    <form method="post" asp-controller="MyBooks" asp-action="Rate" data-bw-autosubmit>
+                        <input type="hidden" name="bookId" value="@book.Id" />
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <fieldset class="bw-star-input" aria-labelledby="myRatingTitle">
+                            @for (var i = 5; i >= 1; i--)
+                            {
+                                <input type="radio" name="value" id="rate-@i" value="@i" checked="@(Model.MyRating == i)" />
+                                <label for="rate-@i" title="@i з 5">★</label>
+                            }
+                        </fieldset>
+                        <noscript><button type="submit" class="btn btn-sm btn-outline-bw mt-2">Оцінити</button></noscript>
+                    </form>
+                }
+            </section>
+        }
+    </div>
+</div>
+
+<div class="mt-5">
+    <a asp-action="Index" class="btn btn-outline-bw">&larr; Назад до каталогу</a>
+</div>
+
+@section Scripts {
+    <script>
+        // Статус і оцінка зберігаються одразу після вибору
+        document.querySelectorAll("form[data-bw-autosubmit]").forEach((form) => {
+            form.addEventListener("change", () => form.requestSubmit ? form.requestSubmit() : form.submit());
+        });
+    </script>
+}

@@ -1,0 +1,14 @@
+@model Book
+@* Обкладинка книги; якщо посилання немає або воно не працює — фірмова заглушка з патерном *@
+@{
+    var hasCover = !string.IsNullOrWhiteSpace(Model.CoverImageUrl);
+}
+@if (hasCover)
+{
+    <img src="@Model.CoverImageUrl" alt="Обкладинка книги «@Model.Title»" loading="lazy" data-bw-cover class="bw-details-img" />
+}
+<div class="bw-cover-placeholder" hidden="@(hasCover ? "hidden" : null)">
+    <img src="~/img/logo-reverse.png" alt="" />
+    <div class="bw-cover-title">@Model.Title</div>
+    <div class="bw-cover-author">@Model.Author</div>
+</div>
