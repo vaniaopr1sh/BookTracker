@@ -200,6 +200,8 @@ a:hover { color: var(--bw-dark); }
     background-color: #fff;
 }
 
+.form-control:disabled, .form-control[readonly] { background-color: var(--bw-cream); color: var(--bw-brown); opacity: 1; }
+
 .form-control::placeholder { color: #9d9682; font-weight: 300; }
 
 .form-label { font-weight: 500; font-size: .9rem; color: var(--bw-brown); margin-bottom: .35rem; }
@@ -884,6 +886,121 @@ a:hover { color: var(--bw-dark); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
     .bw-reveal { opacity: 1; transform: none; }
+}
+
+/* ---------- Особистий кабінет ---------- */
+.bw-profile-head {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    border-radius: var(--bw-radius);
+    padding: 1.75rem 2rem;
+    color: var(--bw-sand);
+    box-shadow: var(--bw-shadow);
+}
+
+.bw-profile-avatar {
+    flex: 0 0 auto;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+    background: var(--bw-olive);
+    color: var(--bw-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--bw-font-brand);
+    font-size: 2rem;
+    text-transform: uppercase;
+    box-shadow: 0 0 0 5px rgba(236, 233, 226, .25);
+}
+
+.bw-profile-name { color: var(--bw-cream); font-size: clamp(1.4rem, 3vw, 2rem); margin: 0; }
+.bw-profile-email { color: var(--bw-olive); font-weight: 300; }
+.bw-profile-logo { height: 80px; width: auto; opacity: .9; }
+
+.bw-stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: .75rem;
+}
+
+.bw-stat-tile {
+    background: var(--bw-cream);
+    border: 1px solid var(--bw-sand);
+    border-radius: var(--bw-radius-sm);
+    padding: 1rem;
+    text-align: center;
+}
+
+.bw-stat-tile-value { font-family: var(--bw-font-brand); font-size: 2rem; line-height: 1.1; color: var(--bw-brown); }
+.bw-stat-tile-label { font-size: .8rem; color: var(--bw-olive-dark); }
+
+.bw-progress-block { margin-top: 1.25rem; }
+.bw-progress { height: .6rem; border-radius: 999px; background: var(--bw-sand); overflow: hidden; }
+.bw-progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--bw-olive), var(--bw-brown)); border-radius: 999px; transition: width .9s ease; }
+
+.bw-recent-list { list-style: none; padding: 0; margin: 0; }
+.bw-recent-list li + li { border-top: 1px solid var(--bw-sand); }
+
+.bw-recent-item {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: .7rem .25rem;
+    text-decoration: none;
+    color: var(--bw-dark);
+    border-radius: var(--bw-radius-sm);
+    transition: background-color var(--bw-transition);
+}
+
+.bw-recent-item:hover { background: rgba(172, 172, 133, .15); color: var(--bw-dark); }
+
+.bw-recent-thumb {
+    flex: 0 0 auto;
+    width: 42px;
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: var(--bw-dark);
+    background-image: var(--bw-pattern-dark);
+    background-size: 30px 30px;
+}
+
+.bw-recent-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.bw-recent-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.bw-recent-info strong { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bw-recent-info small { color: var(--bw-brown); }
+
+.bw-recent-status { font-size: .72rem; font-weight: 600; border-radius: 999px; padding: .2rem .65rem; white-space: nowrap; }
+.bw-status-wanttoread { background: var(--bw-sand); color: var(--bw-brown); }
+.bw-status-reading { background: var(--bw-olive); color: var(--bw-dark); }
+.bw-status-read { background: var(--bw-brown); color: var(--bw-cream); }
+
+.bw-admin-panel { border-left: 4px solid var(--bw-brown); }
+
+.bw-profile-links { list-style: none; padding: 0; margin: 0 0 1rem; }
+.bw-profile-links li { padding: .45rem 0; border-bottom: 1px solid var(--bw-sand); }
+.bw-profile-links a { text-decoration: none; font-weight: 500; }
+
+.bw-session-info {
+    font-size: .8rem;
+    color: var(--bw-olive-dark);
+    background: var(--bw-cream);
+    border-radius: var(--bw-radius-sm);
+    padding: .5rem .75rem;
+}
+
+.bw-session-info::before { content: "●"; color: var(--bw-success); margin-right: .4rem; }
+
+/* Помилки валідації: зведення під формою */
+.validation-summary-errors.bw-auth-alert, .bw-auth-alert.validation-summary-errors { display: block; }
+.validation-summary-valid.bw-auth-alert { display: none; }
+
+@media (max-width: 575.98px) {
+    .bw-profile-head { padding: 1.25rem; gap: .9rem; }
+    .bw-profile-avatar { width: 3.5rem; height: 3.5rem; font-size: 1.5rem; }
+    .bw-stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ---------- Адаптивність ---------- */

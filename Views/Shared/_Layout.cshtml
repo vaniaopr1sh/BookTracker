@@ -64,6 +64,9 @@
                             </li>
                         }
                         <li class="nav-item">
+                            <a class="nav-link @Active("Profile")" asp-area="" asp-controller="Profile" asp-action="Index" data-requires-auth>Кабінет</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link @Active("Home", "Privacy")" asp-area="" asp-controller="Home" asp-action="Privacy">Про нас</a>
                         </li>
                     </ul>
@@ -134,6 +137,10 @@
     @if (TempData["Toast"] is string toast)
     {
         <div hidden data-bw-toast="@toast"></div>
+    }
+    @if (TempData["ToastError"] is string toastError)
+    {
+        <div hidden data-bw-toast="@toastError" data-bw-toast-type="error"></div>
     }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

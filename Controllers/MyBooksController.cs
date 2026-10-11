@@ -51,8 +51,18 @@ public class MyBooksController : Controller
     {
         var userId = _userManager.GetUserId(User)!;
 
+        if (!await _context.Books.AnyAsync(b => b.Id == bookId))
+        {
+            TempData["ToastError"] = "Книгу не знайдено. Можливо, її вже видалили з каталогу";
+            return RedirectToAction("Index", "Books");
+        }
+
         var exists = await _context.UserBooks.AnyAsync(ub => ub.UserId == userId && ub.BookId == bookId);
-        if (!exists)
+        if (exists)
+        {
+            TempData["Toast"] = "Ця книга вже є на вашій полиці";
+        }
+        else
         {
             _context.UserBooks.Add(new UserBook
             {
@@ -61,6 +71,7 @@ public class MyBooksController : Controller
                 Status = ReadingStatus.WantToRead
             });
             await _context.SaveChangesAsync();
+            TempData["Toast"] = "Книгу додано на вашу полицю";
         }
 
         return RedirectIfLocalOrToBookDetails(returnUrl, bookId);
@@ -75,8 +86,15 @@ public class MyBooksController : Controller
         var userBook = await _context.UserBooks.FirstOrDefaultAsync(ub => ub.Id == userBookId && ub.UserId == userId);
         if (userBook is null) return NotFound();
 
+        if (!Enum.IsDefined(status))
+        {
+            TempData["ToastError"] = "Невідомий статус читання";
+            return RedirectIfLocalOrToBookDetails(returnUrl, userBook.BookId);
+        }
+
         userBook.Status = status;
         await _context.SaveChangesAsync();
+        TempData["Toast"] = $"Статус змінено: {status.GetDisplayName()}";
 
         return RedirectIfLocalOrToBookDetails(returnUrl, userBook.BookId);
     }
@@ -92,6 +110,7 @@ public class MyBooksController : Controller
         {
             _context.UserBooks.Remove(userBook);
             await _context.SaveChangesAsync();
+            TempData["Toast"] = "Книгу прибрано з полиці";
         }
 
         return RedirectToAction(nameof(Index));
@@ -104,10 +123,12 @@ public class MyBooksController : Controller
     {
         if (value is null)
         {
+            // Користувач вибрав «—» у списку: оцінку не змінюємо
             return RedirectIfLocalOrToBookDetails(returnUrl, bookId);
         }
         if (value < 1 || value > 5)
         {
+            TempData["ToastError"] = "Оцінка має бути від 1 до 5";
             return RedirectIfLocalOrToBookDetails(returnUrl, bookId);
         }
 
@@ -124,6 +145,7 @@ public class MyBooksController : Controller
         }
 
         await _context.SaveChangesAsync();
+        TempData["Toast"] = $"Дякуємо! Ваша оцінка: {value} з 5";
         return RedirectIfLocalOrToBookDetails(returnUrl, bookId);
     }
 

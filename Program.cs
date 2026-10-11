@@ -52,7 +52,20 @@ builder.Services.AddAuthentication()
     });
 
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<IProfileStatsService, ProfileStatsService>();
+builder.Services.AddControllersWithViews(options =>
+{
+    // Українські повідомлення про помилки прив'язки даних (однакові для всіх форм)
+    var messages = options.ModelBindingMessageProvider;
+    messages.SetValueMustBeANumberAccessor(field => $"Поле «{field}» має бути числом");
+    messages.SetAttemptedValueIsInvalidAccessor((value, field) => $"Значення «{value}» некоректне для поля «{field}»");
+    messages.SetValueIsInvalidAccessor(value => $"Значення «{value}» некоректне");
+    messages.SetMissingBindRequiredValueAccessor(field => $"Не передано значення для поля «{field}»");
+    messages.SetValueMustNotBeNullAccessor(field => $"Поле «{field}» не може бути порожнім");
+    messages.SetUnknownValueIsInvalidAccessor(field => $"Некоректне значення поля «{field}»");
+    messages.SetNonPropertyValueMustBeANumberAccessor(() => "Значення має бути числом");
+    messages.SetMissingRequestBodyRequiredValueAccessor(() => "Тіло запиту порожнє");
+});
 
 var app = builder.Build();
 
@@ -67,6 +80,10 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+// Сторінки помилок 404 / 403 / 500 у фірмовому стилі.
+// Для запитів до /api відповідь повертається у форматі JSON (див. HomeController.StatusCodePage).
+app.UseStatusCodePagesWithReExecute("/Home/StatusCodePage", "?code={0}");
 
 app.UseHttpsRedirection();
 app.UseRouting();

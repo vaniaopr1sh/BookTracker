@@ -2,6 +2,7 @@ using System.Diagnostics;
 using BookTracker.Data;
 using BookTracker.Models;
 using BookTracker.ViewModels;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,7 +53,37 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        var requestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        var exceptionFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+        if (exceptionFeature is not null)
+        {
+            _logger.LogError(exceptionFeature.Error, "Unhandled error on {Path}", exceptionFeature.Path);
+        }
+
+        // Помилка під час запиту до API — відповідаємо JSON, щоб фронтенд показав зрозуміле повідомлення
+        if (IsApiPath(exceptionFeature?.Path))
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { status = 500, message = "Сталася помилка сервера. Спробуйте пізніше.", requestId });
+        }
+
+        return View(new ErrorViewModel { RequestId = requestId });
+    }
+
+    // Сюди потрапляють відповіді з кодами помилок без тіла (404, 401, 403...)
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult StatusCodePage(int code)
+    {
+        var originalPath = HttpContext.Features.Get<IStatusCodeReExecuteFeature>()?.OriginalPath;
+        var model = StatusCodeViewModel.For(code);
+
+        if (IsApiPath(originalPath))
+        {
+            return StatusCode(code, new { status = code, message = model.Message });
+        }
+
+        Response.StatusCode = code;
+        return View("StatusCode", model);
     }
 
     private async Task<HomeViewModel> BuildHomeAsync()
@@ -76,6 +107,9 @@ public class HomeController : Controller
             ReadersCount = await _context.Users.CountAsync()
         };
     }
+
+    private static bool IsApiPath(string? path) =>
+        path is not null && path.StartsWith("/api", StringComparison.OrdinalIgnoreCase);
 
     private IActionResult LocalRedirectOrHome(string? returnUrl) =>
         !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)

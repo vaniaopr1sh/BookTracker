@@ -399,7 +399,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         // Повідомлення з TempData (після редиректу)
-        document.querySelectorAll("[data-bw-toast]").forEach((el) => BookWings.toast(el.dataset.bwToast));
+        document.querySelectorAll("[data-bw-toast]").forEach((el) => BookWings.toast(el.dataset.bwToast, el.dataset.bwToastType || "success"));
 
         // Автоматичне відкриття popup (переадресація з захищеного маршруту)
         if (document.body.dataset.openLogin === "true") {

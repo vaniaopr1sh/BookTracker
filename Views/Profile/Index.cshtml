@@ -1,0 +1,105 @@
+@model BookTracker.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Особистий кабінет";
+    var refreshToken = TempData["RefreshToken"] is bool refresh && refresh;
+}
+
+<div class="bw-profile-head bw-pattern-dark">
+    <div class="bw-profile-avatar" aria-hidden="true">@(Model.DisplayName.Length > 0 ? Model.DisplayName.Substring(0, 1) : "?")</div>
+    <div class="flex-grow-1">
+        <h1 class="bw-profile-name">@Model.DisplayName</h1>
+        <div class="bw-profile-email">@Model.Email</div>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+            @foreach (var role in Model.Roles)
+            {
+                <span class="bw-role-badge">@role</span>
+            }
+        </div>
+    </div>
+    <img src="~/img/logo-reverse.png" alt="" class="bw-profile-logo d-none d-md-block" />
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-8">
+        @* Статистика підвантажується з /api/profile/stats з JWT (wwwroot/js/profile.js) *@
+        <section class="bw-panel" aria-labelledby="statsTitle">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="bw-panel-title mb-0" id="statsTitle">Моя статистика</h2>
+                <button type="button" class="btn btn-sm btn-outline-bw" data-bw-stats-reload aria-label="Оновити статистику">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><path d="M21 3v5h-5" /></svg>
+                </button>
+            </div>
+            <div id="bwProfileStats" aria-live="polite" aria-busy="true">
+                <div class="bw-stat-tiles">
+                    @for (var i = 0; i < 4; i++)
+                    {
+                        <div class="bw-stat-tile"><div class="bw-skeleton-line" style="margin: 0 0 .6rem; height: 1.8rem"></div><div class="bw-skeleton-line short" style="margin: 0"></div></div>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <section class="bw-panel" aria-labelledby="recentTitle">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="bw-panel-title mb-0" id="recentTitle">Нещодавно на полиці</h2>
+                @if (!Model.IsAdmin)
+                {
+                    <a asp-controller="MyBooks" asp-action="Index" class="small">Уся полиця &rarr;</a>
+                }
+            </div>
+            <div id="bwProfileRecent">
+                <div class="bw-skeleton-line"></div>
+                <div class="bw-skeleton-line short"></div>
+            </div>
+        </section>
+
+        @if (Model.IsAdmin)
+        {
+            <section class="bw-panel bw-admin-panel" aria-labelledby="adminTitle">
+                <h2 class="bw-panel-title" id="adminTitle">Панель адміністратора</h2>
+                <div id="bwAdminStats" class="bw-stat-tiles mb-3"></div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-controller="Books" asp-action="Index" class="btn btn-primary">Керувати каталогом</a>
+                    <a asp-controller="Books" asp-action="Create" class="btn btn-outline-bw">+ Додати книгу</a>
+                </div>
+            </section>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <section class="bw-panel" aria-labelledby="editTitle">
+            <h2 class="bw-panel-title" id="editTitle">Особисті дані</h2>
+            <form asp-action="UpdateName" method="post" id="bwProfileForm">
+                <div asp-validation-summary="ModelOnly" class="bw-auth-alert" role="alert"></div>
+                <div class="mb-3">
+                    <label asp-for="Edit.DisplayName" class="form-label"></label>
+                    <input asp-for="Edit.DisplayName" class="form-control" autocomplete="name" />
+                    <span asp-validation-for="Edit.DisplayName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="profileEmail">Email</label>
+                    <input id="profileEmail" class="form-control" value="@Model.Email" readonly disabled />
+                    <div class="bw-auth-hint mt-1">Email використовується для входу і не змінюється.</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" data-loading-text="Зберігаємо…">Зберегти</button>
+            </form>
+        </section>
+
+        <section class="bw-panel" aria-labelledby="securityTitle">
+            <h2 class="bw-panel-title" id="securityTitle">Безпека</h2>
+            <ul class="bw-profile-links">
+                <li><a asp-area="Identity" asp-page="/Account/Manage/ChangePassword">Змінити пароль</a></li>
+                <li><a asp-area="Identity" asp-page="/Account/Manage/Index">Налаштування облікового запису</a></li>
+            </ul>
+            <div class="bw-session-info" id="bwSessionInfo">Сесія активна</div>
+            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home")" method="post" data-bw-logout class="mt-3">
+                <button type="submit" class="btn btn-outline-danger w-100">Вийти з облікового запису</button>
+            </form>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/profile.js" asp-append-version="true" data-refresh-token="@(refreshToken ? "true" : "false")"></script>
+}

@@ -19,7 +19,8 @@
         </a>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bwUserMenu">
             <li><h6 class="dropdown-header">@User.Identity!.Name</h6></li>
-            <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Мій профіль</a></li>
+            <li><a class="dropdown-item" asp-area="" asp-controller="Profile" asp-action="Index">Особистий кабінет</a></li>
+            <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Налаштування облікового запису</a></li>
             @if (isAdmin)
             {
                 <li><a class="dropdown-item" asp-area="" asp-controller="Books" asp-action="Index">Керування каталогом</a></li>

@@ -1,4 +1,4 @@
-# BookWings — Frontend (етап ~50%)
+# BookWings — Frontend (етап ~60%)
 
 Фронтенд книжкового порталу **BookWings** на ASP.NET Core MVC (Razor + Bootstrap 5 + vanilla JS),
 оформлений за брендбуком BookWings 2026.
@@ -28,12 +28,25 @@
 5. **Створення та редагування** — спільна форма `_BookForm` з попереднім переглядом обкладинки, лічильниками символів, підказками жанрів з API.
 6. **Видалення** — popup-підтвердження, видалення через захищений JWT endpoint `DELETE /api/books/{id}`, оновлення каталогу без перезавантаження, toast-повідомлення про успіх/помилку.
 
+7. **Валідація та обробка помилок** — єдині українські повідомлення в браузері (`validation-uk.js`) і на сервері
+   (повідомлення прив'язки даних у `Program.cs`); фокус на першому полі з помилкою, захист від повторного надсилання;
+   сторінки 404 / 403 / 500 у фірмовому стилі; для `/api/*` помилки повертаються у JSON;
+   повідомлення про успіх і помилки для дій з полицею.
+8. **Особистий кабінет** (`/Profile`) — дані користувача, ролі, зміна імені з валідацією;
+   статистика читача з захищеного JWT endpoint `GET /api/profile/stats` (кількість книг, прогрес, середня оцінка,
+   улюблений жанр, останні книги); для адміністратора окрема панель зі статистикою порталу;
+   інформація про сесію та вихід.
+
 Додатково: клієнтська валідація, сторінки 403 / помилки, адаптивність (мобільні), доступність (aria, фокус).
 
 ## Нові / змінені файли
 ```
 Controllers/Api/AuthApiController.cs   — /api/auth/login|register|logout|token|me
 Controllers/Api/BooksApiController.cs  — /api/books/genres, DELETE /api/books/{id}
+Controllers/Api/ProfileApiController.cs — /api/profile/stats (JWT)
+Controllers/ProfileController.cs, Services/ProfileStatsService.cs, ViewModels/ProfileViewModel.cs
+Views/Profile/Index.cshtml, Views/Home/StatusCode.cshtml, ViewModels/StatusCodeViewModel.cs
+wwwroot/js/profile.js, wwwroot/js/validation-uk.js
 Services/JwtOptions.cs, Services/JwtTokenService.cs
 ViewModels/AuthDtos.cs, CatalogViewModel.cs, HomeViewModel.cs
 Views/Shared/_Layout, _LoginPartial, _AuthModal, _ConfirmModal, _BookCard, _BookCover, _Stars, Error
