@@ -1,4 +1,4 @@
-# BookWings — Frontend (етап ~60%)
+# BookWings — Frontend (етап ~70%)
 
 Фронтенд книжкового порталу **BookWings** на ASP.NET Core MVC (Razor + Bootstrap 5 + vanilla JS),
 оформлений за брендбуком BookWings 2026.
@@ -37,6 +37,14 @@
    улюблений жанр, останні книги); для адміністратора окрема панель зі статистикою порталу;
    інформація про сесію та вихід.
 
+9. **Розмежування ролей та адміністративна зона** — окрема область `Areas/Admin` (`/Admin`), усі сторінки якої
+   закриті роллю «Адміністратор» (`AdminControllerBase`); гість бачить popup входу, звичайний користувач — сторінку 403;
+   адміністративні API (`/api/admin/*`, `DELETE /api/books`) перевіряють роль у JWT; посилання на адмінку в меню бачить лише адміністратор.
+10. **Адміністративна панель** — дашборд (книги, користувачі, оцінки, полиці; розподіл за жанрами і статусами;
+    топ за рейтингом; останні додані; книги без опису чи обкладинки); таблиця книг з пошуком, фільтром за жанром,
+    сторінками, редагуванням і видаленням; керування користувачами (пошук, надання/зняття прав адміністратора через
+    `POST /api/admin/users/{id}/role`, свою роль змінити не можна).
+
 Додатково: клієнтська валідація, сторінки 403 / помилки, адаптивність (мобільні), доступність (aria, фокус).
 
 ## Нові / змінені файли
@@ -47,6 +55,9 @@ Controllers/Api/ProfileApiController.cs — /api/profile/stats (JWT)
 Controllers/ProfileController.cs, Services/ProfileStatsService.cs, ViewModels/ProfileViewModel.cs
 Views/Profile/Index.cshtml, Views/Home/StatusCode.cshtml, ViewModels/StatusCodeViewModel.cs
 wwwroot/js/profile.js, wwwroot/js/validation-uk.js
+Areas/Admin/Controllers/AdminControllerBase.cs, DashboardController.cs, CatalogController.cs, UsersController.cs
+Areas/Admin/Views/Shared/_AdminLayout.cshtml, Dashboard/Index, Catalog/Index, Users/Index
+Controllers/Api/AdminApiController.cs, ViewModels/AdminViewModels.cs, wwwroot/js/admin.js
 Services/JwtOptions.cs, Services/JwtTokenService.cs
 ViewModels/AuthDtos.cs, CatalogViewModel.cs, HomeViewModel.cs
 Views/Shared/_Layout, _LoginPartial, _AuthModal, _ConfirmModal, _BookCard, _BookCover, _Stars, Error
@@ -65,3 +76,9 @@ dotnet run
 Адміністратор (створюється автоматично): `admin@booktracker.local` / `Admin123!`
 
 > Ключ `Jwt:Key` в `appsettings.json` — лише для розробки, для продакшну замініть його.
+
+## Перевірка
+Проєкт зібрано (`dotnet build`, без помилок) і запущено; автоматичний браузерний сценарій (33 перевірки) пройдено:
+вхід / реєстрація у popup, JWT, живий пошук, створення / редагування / видалення книги, валідація форм,
+полиця та оцінки, особистий кабінет, захист /Admin для гостя і користувача, заборона API для не-адміна,
+зміна ролі, вихід, сторінка 404, мобільна верстка, відсутність помилок JavaScript.

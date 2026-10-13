@@ -366,7 +366,8 @@
 
             const card = button.closest("[data-bw-book]");
             if (card) {
-                card.querySelector(".bw-book-card").classList.add("is-removing");
+                // Картка в каталозі або рядок таблиці в адмін-панелі
+                (card.querySelector(".bw-book-card") || card).classList.add("is-removing");
                 window.setTimeout(() => {
                     card.remove();
                     document.dispatchEvent(new CustomEvent("bw:catalog-changed"));

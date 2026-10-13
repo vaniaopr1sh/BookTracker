@@ -1,0 +1,124 @@
+@model AdminCatalogViewModel
+@{
+    ViewData["Title"] = "Книги — адмін-панель";
+}
+
+<div class="bw-section-head">
+    <div>
+        <h1 class="bw-title">Керування книгами</h1>
+        <p class="bw-subtitle mb-0">Усього в каталозі: @Model.TotalCount</p>
+    </div>
+    <a asp-area="" asp-controller="Books" asp-action="Create" class="btn btn-primary">+ Додати книгу</a>
+</div>
+
+<form method="get" asp-area="Admin" asp-controller="Catalog" asp-action="Index" class="bw-catalog-toolbar" role="search">
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label for="adminSearch" class="visually-hidden">Пошук</label>
+            <input type="search" id="adminSearch" name="search" value="@Model.Search" class="form-control" placeholder="Назва або автор…" maxlength="100" />
+        </div>
+        <div class="col-8 col-md-4">
+            <label for="adminGenre" class="visually-hidden">Жанр</label>
+            <select id="adminGenre" name="genre" class="form-select" onchange="this.form.submit()">
+                <option value="">Усі жанри</option>
+                @foreach (var genre in Model.Genres)
+                {
+                    <option value="@genre" selected="@(Model.Genre == genre)">@genre</option>
+                }
+            </select>
+        </div>
+        <div class="col-4 col-md-2 d-grid">
+            <button type="submit" class="btn btn-primary">Знайти</button>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Books.Any())
+{
+    <div class="bw-empty">
+        <img src="~/img/alata.jpg" alt="" />
+        <h3>@(Model.TotalCount == 0 ? "Каталог порожній" : "Нічого не знайдено")</h3>
+        <p>@(Model.TotalCount == 0 ? "Додайте першу книгу до каталогу." : "Спробуйте змінити пошуковий запит або жанр.")</p>
+        @if (Model.TotalCount == 0)
+        {
+            <a asp-area="" asp-controller="Books" asp-action="Create" class="btn btn-primary">Додати книгу</a>
+        }
+        else
+        {
+            <a asp-area="Admin" asp-controller="Catalog" asp-action="Index" class="btn btn-outline-bw">Скинути фільтри</a>
+        }
+    </div>
+}
+else
+{
+    <p class="bw-result-info">Показано @Model.Books.Count з @Model.FilteredCount</p>
+    <div class="table-responsive">
+        <table class="table align-middle bw-table mb-0">
+            <thead>
+                <tr>
+                    <th>Книга</th>
+                    <th>Жанр</th>
+                    <th>Рік</th>
+                    <th>Рейтинг</th>
+                    <th>Читачів</th>
+                    <th class="text-end"><span class="visually-hidden">Дії</span></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.Books)
+            {
+                <tr data-bw-book="@row.Book.Id">
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="bw-recent-thumb">
+                                @if (!string.IsNullOrWhiteSpace(row.Book.CoverImageUrl))
+                                {
+                                    <img src="@row.Book.CoverImageUrl" alt="" loading="lazy" onerror="this.remove()" />
+                                }
+                            </span>
+                            <div>
+                                <a asp-area="" asp-controller="Books" asp-action="Details" asp-route-id="@row.Book.Id" class="fw-semibold text-decoration-none">@row.Book.Title</a>
+                                <div class="small text-secondary">@row.Book.Author</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>@(row.Book.Genre ?? "—")</td>
+                    <td>@(row.Book.PublicationYear?.ToString() ?? "—")</td>
+                    <td class="text-nowrap">
+                        @if (row.RatingsCount > 0)
+                        {
+                            <span>@row.AverageRating?.ToString("0.0")</span> <small class="text-secondary">(@row.RatingsCount)</small>
+                        }
+                        else
+                        {
+                            <span class="text-secondary">—</span>
+                        }
+                    </td>
+                    <td>@row.ReadersCount</td>
+                    <td class="text-end text-nowrap">
+                        <a asp-area="" asp-controller="Books" asp-action="Edit" asp-route-id="@row.Book.Id" class="btn btn-sm btn-outline-bw">Редагувати</a>
+                        <a asp-area="" asp-controller="Books" asp-action="Delete" asp-route-id="@row.Book.Id" class="btn btn-sm btn-outline-danger"
+                           data-bw-delete-book data-id="@row.Book.Id" data-title="@row.Book.Title">Видалити</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Сторінки каталогу" class="mt-4">
+            <ul class="pagination bw-pagination justify-content-center">
+                @for (var p = 1; p <= Model.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" asp-area="Admin" asp-controller="Catalog" asp-action="Index"
+                           asp-route-page="@p" asp-route-search="@Model.Search" asp-route-genre="@Model.Genre"
+                           aria-current="@(p == Model.Page ? "page" : null)">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}

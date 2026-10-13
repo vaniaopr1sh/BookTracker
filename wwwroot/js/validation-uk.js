@@ -34,6 +34,15 @@
         return baseNumber.call(this, value.replace(",", "."), element);
     };
 
+    // Повторна перевірка поля з помилкою при будь-якій зміні (вставка з буфера, автозаповнення),
+    // щоб повідомлення зникало одразу, а не в момент кліку по кнопці (інакше кнопка «зсувається» з-під курсора)
+    $(document).on("input change", "form [data-val=true]", function () {
+        const validator = this.form && $(this.form).data("validator");
+        if (validator && this.classList.contains("input-validation-error")) {
+            validator.element(this);
+        }
+    });
+
     // Обрізаємо пробіли на початку й у кінці перед перевіркою
     $(document).on("blur", "input[type=text], input[type=email], input:not([type])", function () {
         if (this.value !== this.value.trim()) this.value = this.value.trim();

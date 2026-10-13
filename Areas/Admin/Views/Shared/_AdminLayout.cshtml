@@ -1,0 +1,46 @@
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(string c) => string.Equals(controller, c, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+@* Каркас адміністративної зони: бічна навігація + вміст розділу *@
+<div class="bw-admin">
+    <aside class="bw-admin-nav" aria-label="Розділи адміністративної панелі">
+        <div class="bw-admin-nav-title">
+            <img src="~/img/wings.png" alt="" width="34" />
+            <span>Адмін-панель</span>
+        </div>
+        <nav>
+            <a class="@Active("Dashboard")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
+                Огляд
+            </a>
+            <a class="@Active("Catalog")" asp-area="Admin" asp-controller="Catalog" asp-action="Index">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 5c3 0 6 .7 10 3v12c-4-2.3-7-3-10-3zM22 5c-3 0-6 .7-10 3v12c4-2.3 7-3 10-3z" /></svg>
+                Книги
+            </a>
+            <a class="@Active("Users")" asp-area="Admin" asp-controller="Users" asp-action="Index">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="4" /><path d="M2 21c0-4 3-6 7-6s7 2 7 6" /><path d="M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-5-5.5" /></svg>
+                Користувачі
+            </a>
+            <hr />
+            <a asp-area="" asp-controller="Books" asp-action="Create">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                Додати книгу
+            </a>
+            <a asp-area="" asp-controller="Books" asp-action="Index">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M21 14v7H3V3h7" /></svg>
+                Сайт очима читача
+            </a>
+        </nav>
+    </aside>
+
+    <div class="bw-admin-content">
+        @RenderBody()
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+}

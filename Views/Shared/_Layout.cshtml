@@ -2,11 +2,13 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var area = ViewContext.RouteData.Values["area"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
     var isSignedIn = SignInManager.IsSignedIn(User);
     var isAdmin = User.IsInRole(Roles.Administrator);
     string Active(string c, string? a = null) =>
-        string.Equals(controller, c, StringComparison.OrdinalIgnoreCase)
+        string.IsNullOrEmpty(area)
+        && string.Equals(controller, c, StringComparison.OrdinalIgnoreCase)
         && (a is null || string.Equals(action, a, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
 }
 <!DOCTYPE html>
@@ -54,7 +56,7 @@
                         @if (isAdmin)
                         {
                             <li class="nav-item">
-                                <a class="nav-link @Active("Books", "Create")" asp-area="" asp-controller="Books" asp-action="Create">Додати книгу</a>
+                                <a class="nav-link @(area == "Admin" ? "active" : "")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Адмін-панель</a>
                             </li>
                         }
                         else

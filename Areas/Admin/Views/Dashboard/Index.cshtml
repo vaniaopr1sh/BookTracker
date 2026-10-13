@@ -1,0 +1,151 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Адмін-панель";
+    var maxGenre = Model.Genres.Count > 0 ? Model.Genres.Max(g => g.Count) : 1;
+    var totalShelf = Math.Max(1, Model.StatusCounts.Values.Sum());
+}
+
+<div class="bw-section-head">
+    <div>
+        <h1 class="bw-title">Огляд порталу</h1>
+        <p class="bw-subtitle mb-0">Ключові показники BookWings на @DateTime.Now.ToString("dd.MM.yyyy")</p>
+    </div>
+    <a asp-area="" asp-controller="Books" asp-action="Create" class="btn btn-primary">+ Додати книгу</a>
+</div>
+
+<div class="bw-stat-tiles bw-admin-tiles mb-4">
+    <a class="bw-stat-tile" asp-area="Admin" asp-controller="Catalog" asp-action="Index">
+        <div class="bw-stat-tile-value">@Model.BooksCount</div>
+        <div class="bw-stat-tile-label">книг у каталозі</div>
+    </a>
+    <a class="bw-stat-tile" asp-area="Admin" asp-controller="Users" asp-action="Index">
+        <div class="bw-stat-tile-value">@Model.UsersCount</div>
+        <div class="bw-stat-tile-label">користувачів (@Model.AdminsCount адмін.)</div>
+    </a>
+    <div class="bw-stat-tile">
+        <div class="bw-stat-tile-value">@Model.RatingsCount</div>
+        <div class="bw-stat-tile-label">оцінок, середня @(Model.AverageRating?.ToString("0.0") ?? "—")</div>
+    </div>
+    <div class="bw-stat-tile">
+        <div class="bw-stat-tile-value">@Model.ShelfEntriesCount</div>
+        <div class="bw-stat-tile-label">книг на полицях читачів</div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-6">
+        <section class="bw-panel h-100" aria-labelledby="genresTitle">
+            <h2 class="bw-panel-title" id="genresTitle">Книги за жанрами</h2>
+            @if (!Model.Genres.Any())
+            {
+                <p class="text-secondary mb-0">У каталозі ще немає книг.</p>
+            }
+            else
+            {
+                <ul class="bw-bars">
+                    @foreach (var genre in Model.Genres)
+                    {
+                        var percent = (int)Math.Round(genre.Count * 100.0 / maxGenre);
+                        <li>
+                            <a asp-area="Admin" asp-controller="Catalog" asp-action="Index" asp-route-genre="@(genre.Name == "Без жанру" ? null : genre.Name)" class="bw-bar-label">@genre.Name</a>
+                            <span class="bw-bar"><span style="width: @percent%"></span></span>
+                            <strong>@genre.Count</strong>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+
+    <div class="col-xl-6">
+        <section class="bw-panel h-100" aria-labelledby="readingTitle">
+            <h2 class="bw-panel-title" id="readingTitle">Активність читачів</h2>
+            <ul class="bw-bars">
+                @foreach (var pair in Model.StatusCounts)
+                {
+                    var percent = (int)Math.Round(pair.Value * 100.0 / totalShelf);
+                    <li>
+                        <span class="bw-bar-label">@pair.Key.GetDisplayName()</span>
+                        <span class="bw-bar bw-bar--@pair.Key.ToString().ToLower()"><span style="width: @percent%"></span></span>
+                        <strong>@pair.Value</strong>
+                    </li>
+                }
+            </ul>
+            <p class="small text-secondary mt-3 mb-0">Скільки разів книги додано на полиці з кожним статусом.</p>
+        </section>
+    </div>
+
+    <div class="col-xl-6">
+        <section class="bw-panel h-100" aria-labelledby="topTitle">
+            <h2 class="bw-panel-title" id="topTitle">Найвищий рейтинг</h2>
+            @if (!Model.TopRated.Any())
+            {
+                <p class="text-secondary mb-0">Читачі ще не поставили жодної оцінки.</p>
+            }
+            else
+            {
+                <ol class="bw-admin-list">
+                    @foreach (var row in Model.TopRated)
+                    {
+                        <li>
+                            <a asp-area="" asp-controller="Books" asp-action="Details" asp-route-id="@row.Book.Id">@row.Book.Title</a>
+                            <span class="text-secondary small">@row.Book.Author</span>
+                            <span class="ms-auto text-nowrap"><partial name="_Stars" model="row.AverageRating" /> <small>@row.AverageRating?.ToString("0.0") (@row.RatingsCount)</small></span>
+                        </li>
+                    }
+                </ol>
+            }
+        </section>
+    </div>
+
+    <div class="col-xl-6">
+        <section class="bw-panel h-100" aria-labelledby="latestTitle">
+            <h2 class="bw-panel-title" id="latestTitle">Останні додані</h2>
+            @if (!Model.LatestBooks.Any())
+            {
+                <p class="text-secondary mb-0">Каталог порожній. <a asp-area="" asp-controller="Books" asp-action="Create">Додайте першу книгу</a>.</p>
+            }
+            else
+            {
+                <ul class="bw-admin-list">
+                    @foreach (var row in Model.LatestBooks)
+                    {
+                        <li data-bw-book="@row.Book.Id">
+                            <a asp-area="" asp-controller="Books" asp-action="Details" asp-route-id="@row.Book.Id">@row.Book.Title</a>
+                            <span class="text-secondary small">@row.Book.Author</span>
+                            <span class="ms-auto d-flex gap-1">
+                                <a asp-area="" asp-controller="Books" asp-action="Edit" asp-route-id="@row.Book.Id" class="btn btn-sm btn-outline-bw">Редагувати</a>
+                                <a asp-area="" asp-controller="Books" asp-action="Delete" asp-route-id="@row.Book.Id" class="btn btn-sm btn-outline-danger"
+                                   data-bw-delete-book data-id="@row.Book.Id" data-title="@row.Book.Title" aria-label="Видалити «@row.Book.Title»">&times;</a>
+                            </span>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+
+    @if (Model.WithoutDescription.Any())
+    {
+        <div class="col-12">
+            <section class="bw-panel bw-admin-panel" aria-labelledby="todoTitle">
+                <h2 class="bw-panel-title" id="todoTitle">Потребують уваги</h2>
+                <p class="small text-secondary">Книги без опису або обкладинки. Заповніть їх, щоб каталог виглядав привабливіше.</p>
+                <ul class="bw-admin-list">
+                    @foreach (var row in Model.WithoutDescription)
+                    {
+                        <li>
+                            <span>@row.Book.Title</span>
+                            <span class="small text-secondary">
+                                @(string.IsNullOrWhiteSpace(row.Book.Description) ? "немає опису" : "")
+                                @(string.IsNullOrWhiteSpace(row.Book.Description) && string.IsNullOrWhiteSpace(row.Book.CoverImageUrl) ? " · " : "")
+                                @(string.IsNullOrWhiteSpace(row.Book.CoverImageUrl) ? "немає обкладинки" : "")
+                            </span>
+                            <a asp-area="" asp-controller="Books" asp-action="Edit" asp-route-id="@row.Book.Id" class="btn btn-sm btn-olive ms-auto">Заповнити</a>
+                        </li>
+                    }
+                </ul>
+            </section>
+        </div>
+    }
+</div>

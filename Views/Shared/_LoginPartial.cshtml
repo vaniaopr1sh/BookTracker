@@ -23,7 +23,8 @@
             <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Налаштування облікового запису</a></li>
             @if (isAdmin)
             {
-                <li><a class="dropdown-item" asp-area="" asp-controller="Books" asp-action="Index">Керування каталогом</a></li>
+                <li><a class="dropdown-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Адмін-панель</a></li>
+                <li><a class="dropdown-item" asp-area="Admin" asp-controller="Catalog" asp-action="Index">Керування книгами</a></li>
                 <li><a class="dropdown-item" asp-area="" asp-controller="Books" asp-action="Create">Додати книгу</a></li>
             }
             else

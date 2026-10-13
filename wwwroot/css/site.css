@@ -1003,6 +1003,101 @@ a:hover { color: var(--bw-dark); }
     .bw-stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* ---------- Адміністративна зона ---------- */
+.bw-admin {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 1.75rem;
+    align-items: start;
+}
+
+.bw-admin-nav {
+    position: sticky;
+    top: 90px;
+    background: var(--bw-dark);
+    background-image: var(--bw-pattern-dark);
+    background-size: 80px 80px;
+    border-radius: var(--bw-radius);
+    padding: 1.25rem .75rem;
+    box-shadow: var(--bw-shadow);
+}
+
+.bw-admin-nav-title {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: var(--bw-olive);
+    font-family: var(--bw-font-brand);
+    font-size: 1.2rem;
+    padding: 0 .6rem 1rem;
+}
+
+.bw-admin-nav-title img { filter: brightness(0) invert(.75) sepia(.4); }
+
+.bw-admin-nav nav { display: flex; flex-direction: column; gap: .2rem; }
+.bw-admin-nav hr { border-color: rgba(172, 172, 133, .4); margin: .6rem .4rem; }
+
+.bw-admin-nav a {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: var(--bw-sand);
+    text-decoration: none;
+    padding: .55rem .75rem;
+    border-radius: var(--bw-radius-sm);
+    font-weight: 500;
+    font-size: .92rem;
+    transition: background-color var(--bw-transition), color var(--bw-transition);
+}
+
+.bw-admin-nav a:hover { background: rgba(172, 172, 133, .18); color: var(--bw-cream); }
+.bw-admin-nav a.active { background: var(--bw-olive); color: var(--bw-dark); }
+
+a.bw-stat-tile { text-decoration: none; transition: transform var(--bw-transition), box-shadow var(--bw-transition); }
+a.bw-stat-tile:hover { transform: translateY(-2px); box-shadow: var(--bw-shadow); }
+.bw-admin-tiles .bw-stat-tile { background: var(--bw-white); }
+
+.bw-bars { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .65rem; }
+.bw-bars li { display: grid; grid-template-columns: 130px 1fr 2.5rem; align-items: center; gap: .75rem; font-size: .9rem; }
+.bw-bar-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bw-dark); text-decoration: none; }
+a.bw-bar-label:hover { color: var(--bw-brown); text-decoration: underline; }
+.bw-bars strong { text-align: right; color: var(--bw-brown); }
+.bw-bar { height: .7rem; background: var(--bw-sand); border-radius: 999px; overflow: hidden; }
+.bw-bar > span { display: block; height: 100%; min-width: 4px; background: var(--bw-brown); border-radius: 999px; }
+.bw-bar--wanttoread > span { background: var(--bw-olive-dark); }
+.bw-bar--reading > span { background: var(--bw-olive); }
+.bw-bar--read > span { background: var(--bw-brown); }
+
+.bw-admin-list { list-style: none; padding: 0; margin: 0; counter-reset: bw-top; }
+.bw-admin-list li { display: flex; align-items: center; flex-wrap: wrap; gap: .25rem .75rem; padding: .6rem 0; border-bottom: 1px solid var(--bw-sand); }
+.bw-admin-list li:last-child { border-bottom: 0; }
+.bw-admin-list a:not(.btn) { font-weight: 600; text-decoration: none; }
+ol.bw-admin-list li::before { counter-increment: bw-top; content: counter(bw-top); font-family: var(--bw-font-brand); color: var(--bw-olive-dark); width: 1.2rem; }
+
+tr.is-removing, li.is-removing { opacity: 0; transition: opacity .35s ease; }
+
+.bw-role-badge--user { background: var(--bw-sand); color: var(--bw-brown); }
+
+.bw-pagination {
+    --bs-pagination-color: var(--bw-brown);
+    --bs-pagination-bg: var(--bw-white);
+    --bs-pagination-border-color: var(--bw-sand);
+    --bs-pagination-hover-color: var(--bw-dark);
+    --bs-pagination-hover-bg: var(--bw-sand);
+    --bs-pagination-active-bg: var(--bw-brown);
+    --bs-pagination-active-border-color: var(--bw-brown);
+    --bs-pagination-focus-box-shadow: 0 0 0 .2rem rgba(172, 172, 133, .4);
+}
+
+@media (max-width: 991.98px) {
+    .bw-admin { grid-template-columns: 1fr; }
+    .bw-admin-nav { position: static; padding: .75rem; }
+    .bw-admin-nav-title { display: none; }
+    .bw-admin-nav nav { flex-direction: row; flex-wrap: wrap; }
+    .bw-admin-nav hr { display: none; }
+    .bw-bars li { grid-template-columns: 95px 1fr 2rem; }
+}
+
 /* ---------- Адаптивність ---------- */
 @media (max-width: 575.98px) {
     .bw-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; }
