@@ -1,0 +1,13 @@
+@{
+    var code = ViewData["Code"];
+}
+
+<div class="text-center py-5">
+    <h1 class="display-4">@code</h1>
+    <h2>@ViewData["Title"]</h2>
+    <p class="lead">@ViewData["Message"]</p>
+    <p>
+        <a asp-controller="Books" asp-action="Index" class="btn btn-primary">До каталогу</a>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">На головну</a>
+    </p>
+</div>

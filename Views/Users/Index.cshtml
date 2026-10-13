@@ -1,0 +1,82 @@
+@model IReadOnlyList<BookTracker.ViewModels.UserListItemViewModel>
+@using BookTracker.Models
+@{
+    ViewData["Title"] = "Користувачі";
+    var currentUserId = ViewData["CurrentUserId"] as string;
+}
+
+<h1>Користувачі</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <input type="text" name="search" value="@ViewData["Search"]" maxlength="200" class="form-control" placeholder="Email або ім'я" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Пошук</button>
+        <a asp-action="Index" class="btn btn-link">Скинути</a>
+    </div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <p>Користувачів не знайдено.</p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Ім'я</th>
+                <th>Роль</th>
+                <th>Книг / оцінок</th>
+                <th>Стан</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var u in Model)
+        {
+            var isSelf = u.Id == currentUserId;
+            var isAdmin = u.Roles.Contains(Roles.Administrator);
+            <tr>
+                <td>@u.Email @if (isSelf) { <span class="badge bg-secondary">це ви</span> }</td>
+                <td>@u.DisplayName</td>
+                <td>@(u.Roles.Count > 0 ? string.Join(", ", u.Roles) : "—")</td>
+                <td>@u.BooksCount / @u.RatingsCount</td>
+                <td>
+                    @if (u.IsLockedOut)
+                    {
+                        <span class="badge bg-danger">Заблоковано</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Активний</span>
+                    }
+                </td>
+                <td class="text-nowrap">
+                    @if (!isSelf)
+                    {
+                        <form method="post" asp-action="SetRole" class="d-inline">
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <input type="hidden" name="role" value="@(isAdmin ? Roles.User : Roles.Administrator)" />
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                @(isAdmin ? "Зробити користувачем" : "Зробити адміністратором")
+                            </button>
+                        </form>
+                        <form method="post" asp-action="@(u.IsLockedOut ? "Unlock" : "Lock")" class="d-inline">
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-warning">@(u.IsLockedOut ? "Розблокувати" : "Заблокувати")</button>
+                        </form>
+                        <form method="post" asp-action="Delete" class="d-inline"
+                              onsubmit="return confirm('Видалити цього користувача разом з його книгами та оцінками?');">
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Видалити</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

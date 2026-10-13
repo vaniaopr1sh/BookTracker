@@ -1,46 +1,34 @@
-using BookTracker.Data;
 using BookTracker.Models;
-using BookTracker.ViewModels;
+using BookTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BookTracker.Controllers;
 
-[Authorize]
-public class MyBooksController : Controller
+/// <summary>
+/// Особистий список книг і оцінки. Доступний лише користувачам з роллю «Користувач».
+/// </summary>
+[Authorize(Roles = Roles.User)]
+public class MyBooksController : AppController
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IUserBookService _userBookService;
+    private readonly IRatingService _ratingService;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public MyBooksController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public MyBooksController(IUserBookService userBookService, IRatingService ratingService, UserManager<ApplicationUser> userManager)
     {
-        _context = context;
+        _userBookService = userBookService;
+        _ratingService = ratingService;
         _userManager = userManager;
     }
 
-    // GET: /MyBooks
-    public async Task<IActionResult> Index()
+    private string CurrentUserId => _userManager.GetUserId(User)!;
+
+    // GET: /MyBooks?status=Reading
+    public async Task<IActionResult> Index(ReadingStatus? status)
     {
-        var userId = _userManager.GetUserId(User)!;
-
-        var userBooks = await _context.UserBooks
-            .Include(ub => ub.Book)
-            .Where(ub => ub.UserId == userId)
-            .OrderByDescending(ub => ub.AddedAt)
-            .ToListAsync();
-
-        var myRatings = await _context.Ratings
-            .Where(r => r.UserId == userId)
-            .ToDictionaryAsync(r => r.BookId, r => r.Value);
-
-        var model = userBooks.Select(ub => new MyBookItemViewModel
-        {
-            UserBook = ub,
-            MyRating = myRatings.TryGetValue(ub.BookId, out var value) ? value : null
-        }).ToList();
-
+        var model = await _userBookService.GetMyBooksAsync(CurrentUserId, status);
         return View(model);
     }
 
@@ -49,21 +37,11 @@ public class MyBooksController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(int bookId, string? returnUrl)
     {
-        var userId = _userManager.GetUserId(User)!;
+        var result = await _userBookService.AddAsync(CurrentUserId, bookId);
+        if (result.ErrorType == ServiceErrorType.NotFound) return NotFound();
 
-        var exists = await _context.UserBooks.AnyAsync(ub => ub.UserId == userId && ub.BookId == bookId);
-        if (!exists)
-        {
-            _context.UserBooks.Add(new UserBook
-            {
-                UserId = userId,
-                BookId = bookId,
-                Status = ReadingStatus.WantToRead
-            });
-            await _context.SaveChangesAsync();
-        }
-
-        return RedirectIfLocalOrToBookDetails(returnUrl, bookId);
+        ShowResult(result, "Книгу додано до ваших книг.");
+        return RedirectToLocal(returnUrl, () => RedirectToAction("Details", "Books", new { id = bookId }));
     }
 
     // POST: /MyBooks/UpdateStatus
@@ -71,68 +49,57 @@ public class MyBooksController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateStatus(int userBookId, ReadingStatus status, string? returnUrl)
     {
-        var userId = _userManager.GetUserId(User)!;
-        var userBook = await _context.UserBooks.FirstOrDefaultAsync(ub => ub.Id == userBookId && ub.UserId == userId);
-        if (userBook is null) return NotFound();
+        if (!ModelState.IsValid)
+        {
+            ShowError("Невідомий статус читання.");
+            return RedirectToLocal(returnUrl, () => RedirectToAction(nameof(Index)));
+        }
 
-        userBook.Status = status;
-        await _context.SaveChangesAsync();
+        var result = await _userBookService.UpdateStatusAsync(CurrentUserId, userBookId, status);
+        if (result.ErrorType == ServiceErrorType.NotFound) return NotFound();
 
-        return RedirectIfLocalOrToBookDetails(returnUrl, userBook.BookId);
+        ShowResult(result, $"Статус змінено на «{status.GetDisplayName()}».");
+        return RedirectToLocal(returnUrl, () => RedirectToAction(nameof(Index)));
     }
 
     // POST: /MyBooks/Remove
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Remove(int userBookId)
+    public async Task<IActionResult> Remove(int userBookId, string? returnUrl)
     {
-        var userId = _userManager.GetUserId(User)!;
-        var userBook = await _context.UserBooks.FirstOrDefaultAsync(ub => ub.Id == userBookId && ub.UserId == userId);
-        if (userBook is not null)
-        {
-            _context.UserBooks.Remove(userBook);
-            await _context.SaveChangesAsync();
-        }
+        var result = await _userBookService.RemoveAsync(CurrentUserId, userBookId);
+        if (result.ErrorType == ServiceErrorType.NotFound) return NotFound();
 
-        return RedirectToAction(nameof(Index));
+        ShowResult(result, "Книгу прибрано з ваших книг.");
+        return RedirectToLocal(returnUrl, () => RedirectToAction(nameof(Index)));
     }
 
-    // POST: /MyBooks/Rate
+    // POST: /MyBooks/Rate — порожнє значення означає «прибрати оцінку».
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Rate(int bookId, int? value, string? returnUrl)
     {
-        if (value is null)
+        ServiceResult result;
+        string successMessage;
+        if (!ModelState.IsValid)
         {
-            return RedirectIfLocalOrToBookDetails(returnUrl, bookId);
+            result = ServiceResult.Invalid($"Оцінка має бути від {RatingService.MinValue} до {RatingService.MaxValue}.");
+            successMessage = string.Empty;
         }
-        if (value < 1 || value > 5)
+        else if (value is null)
         {
-            return RedirectIfLocalOrToBookDetails(returnUrl, bookId);
-        }
-
-        var userId = _userManager.GetUserId(User)!;
-        var rating = await _context.Ratings.FirstOrDefaultAsync(r => r.UserId == userId && r.BookId == bookId);
-        if (rating is null)
-        {
-            _context.Ratings.Add(new Rating { UserId = userId, BookId = bookId, Value = value.Value });
+            result = await _ratingService.RemoveAsync(CurrentUserId, bookId);
+            successMessage = "Оцінку прибрано.";
         }
         else
         {
-            rating.Value = value.Value;
-            rating.CreatedAt = DateTime.UtcNow;
+            result = await _ratingService.RateAsync(CurrentUserId, bookId, value.Value);
+            successMessage = $"Вашу оцінку {value} збережено.";
         }
 
-        await _context.SaveChangesAsync();
-        return RedirectIfLocalOrToBookDetails(returnUrl, bookId);
-    }
+        if (result.ErrorType == ServiceErrorType.NotFound && value is not null) return NotFound();
 
-    private IActionResult RedirectIfLocalOrToBookDetails(string? returnUrl, int bookId)
-    {
-        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-        {
-            return Redirect(returnUrl);
-        }
-        return RedirectToAction("Details", "Books", new { id = bookId });
+        ShowResult(result, successMessage);
+        return RedirectToLocal(returnUrl, () => RedirectToAction("Details", "Books", new { id = bookId }));
     }
 }

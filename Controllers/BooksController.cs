@@ -1,81 +1,38 @@
-using BookTracker.Data;
 using BookTracker.Models;
+using BookTracker.Services;
 using BookTracker.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace BookTracker.Controllers;
 
-public class BooksController : Controller
+public class BooksController : AppController
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IBookService _bookService;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public BooksController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public BooksController(IBookService bookService, UserManager<ApplicationUser> userManager)
     {
-        _context = context;
+        _bookService = bookService;
         _userManager = userManager;
     }
 
-    // GET: /Books?search=...
-    public async Task<IActionResult> Index(string? search)
+    // GET: /Books?search=...&genre=...&yearFrom=...&yearTo=...&sort=...
+    [AllowAnonymous]
+    public async Task<IActionResult> Index([FromQuery] BookQuery query)
     {
-        var query = _context.Books.AsQueryable();
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            query = query.Where(b => b.Title.Contains(search) || b.Author.Contains(search));
-        }
-
-        var books = await query.OrderBy(b => b.Title).ToListAsync();
-        var userId = _userManager.GetUserId(User);
-
-        var ratingStats = await _context.Ratings
-            .GroupBy(r => r.BookId)
-            .Select(g => new { BookId = g.Key, Avg = g.Average(r => r.Value), Count = g.Count() })
-            .ToDictionaryAsync(x => x.BookId);
-
-        var myBookIds = userId is null
-            ? new HashSet<int>()
-            : (await _context.UserBooks.Where(ub => ub.UserId == userId).Select(ub => ub.BookId).ToListAsync()).ToHashSet();
-
-        var model = books.Select(b => new BookListItemViewModel
-        {
-            Book = b,
-            AverageRating = ratingStats.TryGetValue(b.Id, out var stat) ? stat.Avg : null,
-            RatingsCount = ratingStats.TryGetValue(b.Id, out var stat2) ? stat2.Count : 0,
-            IsInMyBooks = myBookIds.Contains(b.Id)
-        }).ToList();
-
-        ViewData["Search"] = search;
+        // Некоректні параметри не ламають сторінку: сервіс їх нормалізує, а помилки показуються над формою.
+        var model = await _bookService.GetCatalogAsync(query, _userManager.GetUserId(User));
         return View(model);
     }
 
     // GET: /Books/Details/5
+    [AllowAnonymous]
     public async Task<IActionResult> Details(int id)
     {
-        var book = await _context.Books.FirstOrDefaultAsync(b => b.Id == id);
-        if (book is null) return NotFound();
-
-        var ratings = await _context.Ratings.Where(r => r.BookId == id).ToListAsync();
-        var userId = _userManager.GetUserId(User);
-
-        var model = new BookDetailsViewModel
-        {
-            Book = book,
-            AverageRating = ratings.Count > 0 ? ratings.Average(r => r.Value) : null,
-            RatingsCount = ratings.Count
-        };
-
-        if (userId is not null)
-        {
-            var myUserBook = await _context.UserBooks.FirstOrDefaultAsync(ub => ub.UserId == userId && ub.BookId == id);
-            model.MyUserBookId = myUserBook?.Id;
-            model.MyStatus = myUserBook?.Status;
-            model.MyRating = ratings.FirstOrDefault(r => r.UserId == userId)?.Value;
-        }
-
+        var model = await _bookService.GetDetailsAsync(id, _userManager.GetUserId(User));
+        if (model is null) return NotFound();
         return View(model);
     }
 
@@ -91,8 +48,14 @@ public class BooksController : Controller
     {
         if (!ModelState.IsValid) return View(book);
 
-        _context.Books.Add(book);
-        await _context.SaveChangesAsync();
+        var result = await _bookService.CreateAsync(book);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return View(book);
+        }
+
+        ShowSuccess($"Книгу «{book.Title}» додано до каталогу.");
         return RedirectToAction(nameof(Index));
     }
 
@@ -100,7 +63,7 @@ public class BooksController : Controller
     [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> Edit(int id)
     {
-        var book = await _context.Books.FindAsync(id);
+        var book = await _bookService.FindAsync(id);
         if (book is null) return NotFound();
         return View(book);
     }
@@ -111,19 +74,30 @@ public class BooksController : Controller
     [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Author,Genre,PublicationYear,Description,CoverImageUrl")] Book book)
     {
-        if (id != book.Id) return NotFound();
+        if (id != book.Id) return BadRequest();
         if (!ModelState.IsValid) return View(book);
 
-        _context.Update(book);
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        var result = await _bookService.UpdateAsync(book);
+        if (result.ErrorType == ServiceErrorType.NotFound)
+        {
+            ShowError(result.Error!);
+            return RedirectToAction(nameof(Index));
+        }
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return View(book);
+        }
+
+        ShowSuccess($"Зміни у книзі «{book.Title}» збережено.");
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     // GET: /Books/Delete/5
     [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> Delete(int id)
     {
-        var book = await _context.Books.FirstOrDefaultAsync(b => b.Id == id);
+        var book = await _bookService.FindAsync(id);
         if (book is null) return NotFound();
         return View(book);
     }
@@ -134,12 +108,8 @@ public class BooksController : Controller
     [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var book = await _context.Books.FindAsync(id);
-        if (book is not null)
-        {
-            _context.Books.Remove(book);
-            await _context.SaveChangesAsync();
-        }
+        var result = await _bookService.DeleteAsync(id);
+        ShowResult(result, "Книгу видалено з каталогу.");
         return RedirectToAction(nameof(Index));
     }
 }

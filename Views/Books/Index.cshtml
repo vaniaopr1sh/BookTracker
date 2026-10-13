@@ -1,78 +1,122 @@
-@model List<BookTracker.ViewModels.BookListItemViewModel>
+@model BookTracker.ViewModels.CatalogViewModel
 @using BookTracker.Models
+@using BookTracker.ViewModels
 @{
     ViewData["Title"] = "Книги";
     var isAdmin = User.IsInRole(Roles.Administrator);
+    var isReader = User.IsInRole(Roles.User);
+    var q = Model.Query;
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
 <h1>Каталог книг</h1>
 
-<form method="get" class="row g-2 mb-3">
-    <div class="col-auto">
-        <input type="text" name="search" value="@ViewData["Search"]" class="form-control" placeholder="Пошук за назвою або автором" />
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form method="get" asp-action="Index" class="row g-2 mb-3 align-items-end">
+    <div class="col-md-3">
+        <label for="search" class="form-label">Пошук</label>
+        <input type="text" id="search" name="search" value="@q.Search" maxlength="200" class="form-control" placeholder="Назва або автор" />
     </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-outline-secondary">Пошук</button>
+    <div class="col-md-2">
+        <label for="genre" class="form-label">Жанр</label>
+        <select id="genre" name="genre" class="form-select">
+            <option value="">Усі жанри</option>
+            @foreach (var genre in Model.Genres)
+            {
+                <option value="@genre" selected="@(genre == q.Genre)">@genre</option>
+            }
+        </select>
+    </div>
+    <div class="col-6 col-md-1">
+        <label for="yearFrom" class="form-label">Рік від</label>
+        <input type="number" id="yearFrom" name="yearFrom" value="@q.YearFrom" min="0" max="2100" class="form-control" />
+    </div>
+    <div class="col-6 col-md-1">
+        <label for="yearTo" class="form-label">Рік до</label>
+        <input type="number" id="yearTo" name="yearTo" value="@q.YearTo" min="0" max="2100" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label for="sort" class="form-label">Сортування</label>
+        <select id="sort" name="sort" class="form-select">
+            @foreach (var sort in Enum.GetValues<BookSort>())
+            {
+                <option value="@sort" selected="@(sort == q.Sort)">@sort.GetDisplayName()</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-primary">Застосувати</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Скинути</a>
     </div>
 </form>
 
 @if (isAdmin)
 {
-    <p><a asp-action="Create" class="btn btn-primary">Додати книгу</a></p>
+    <p><a asp-action="Create" class="btn btn-success">Додати книгу</a></p>
 }
 
-<table class="table table-striped align-middle">
-    <thead>
-        <tr>
-            <th>Назва</th>
-            <th>Автор</th>
-            <th>Жанр</th>
-            <th>Рік</th>
-            <th>Рейтинг</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var item in Model)
-    {
-        <tr>
-            <td><a asp-action="Details" asp-route-id="@item.Book.Id">@item.Book.Title</a></td>
-            <td>@item.Book.Author</td>
-            <td>@item.Book.Genre</td>
-            <td>@item.Book.PublicationYear</td>
-            <td>
-                @if (item.AverageRating is not null)
-                {
-                    @($"{item.AverageRating:0.0} / 5 ({item.RatingsCount})")
-                }
-                else
-                {
-                    <span class="text-muted">немає оцінок</span>
-                }
-            </td>
-            <td>
-                @if (isAdmin)
-                {
-                    <a asp-action="Edit" asp-route-id="@item.Book.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
-                    <a asp-action="Delete" asp-route-id="@item.Book.Id" class="btn btn-sm btn-outline-danger">Видалити</a>
-                }
-                else if (User.Identity?.IsAuthenticated == true)
-                {
-                    @if (item.IsInMyBooks)
+<p class="text-muted">Знайдено книг: @Model.Books.Count</p>
+
+@if (Model.Books.Count == 0)
+{
+    <p>За вашим запитом нічого не знайдено. Спробуйте змінити умови пошуку або <a asp-action="Index">скинути фільтри</a>.</p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Назва</th>
+                <th>Автор</th>
+                <th>Жанр</th>
+                <th>Рік</th>
+                <th>Рейтинг</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Books)
+        {
+            <tr>
+                <td><a asp-action="Details" asp-route-id="@item.Book.Id">@item.Book.Title</a></td>
+                <td>@item.Book.Author</td>
+                <td>@item.Book.Genre</td>
+                <td>@item.Book.PublicationYear</td>
+                <td>
+                    @if (item.AverageRating is not null)
                     {
-                        <span class="badge bg-success">У моїх книгах</span>
+                        @($"{item.AverageRating:0.0} / 5 ({item.RatingsCount})")
                     }
                     else
                     {
-                        <form method="post" asp-controller="MyBooks" asp-action="Add" class="d-inline">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="bookId" value="@item.Book.Id" />
-                            <button type="submit" class="btn btn-sm btn-primary">Додати до моїх книг</button>
-                        </form>
+                        <span class="text-muted">немає оцінок</span>
                     }
-                }
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
+                </td>
+                <td class="text-nowrap">
+                    @if (isAdmin)
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.Book.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                        <a asp-action="Delete" asp-route-id="@item.Book.Id" class="btn btn-sm btn-outline-danger">Видалити</a>
+                    }
+                    else if (isReader)
+                    {
+                        @if (item.IsInMyBooks)
+                        {
+                            <span class="badge bg-success">У моїх книгах</span>
+                        }
+                        else
+                        {
+                            <form method="post" asp-controller="MyBooks" asp-action="Add" class="d-inline">
+                                <input type="hidden" name="bookId" value="@item.Book.Id" />
+                                <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                <button type="submit" class="btn btn-sm btn-primary">Додати до моїх книг</button>
+                            </form>
+                        }
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

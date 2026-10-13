@@ -45,6 +45,15 @@ public static class DbSeeder
             await userManager.AddToRoleAsync(admin, Roles.Administrator);
         }
 
+        // Кожен обліковий запис має мати роль: користувачам без ролі призначаємо «Користувач».
+        var usersWithoutRole = await db.Users
+            .Where(u => !db.UserRoles.Any(ur => ur.UserId == u.Id))
+            .ToListAsync();
+        foreach (var user in usersWithoutRole)
+        {
+            await userManager.AddToRoleAsync(user, Roles.User);
+        }
+
         if (!await db.Books.AnyAsync())
         {
             db.Books.AddRange(

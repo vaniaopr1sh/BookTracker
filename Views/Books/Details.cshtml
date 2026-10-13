@@ -2,6 +2,7 @@
 @using BookTracker.Models
 @{
     ViewData["Title"] = Model.Book.Title;
+    var returnUrl = Url.Action("Details", "Books", new { id = Model.Book.Id });
 }
 
 <h1>@Model.Book.Title</h1>
@@ -16,50 +17,71 @@
 
 <p>
     <strong>Середня оцінка:</strong>
-    @(Model.AverageRating is not null ? $"{Model.AverageRating:0.0} / 5 ({Model.RatingsCount} оцінок)" : "немає оцінок")
+    @(Model.AverageRating is not null ? $"{Model.AverageRating:0.0} / 5 (оцінок: {Model.RatingsCount})" : "немає оцінок")
 </p>
 
-@if (User.Identity?.IsAuthenticated == true && !User.IsInRole(Roles.Administrator))
+@if (User.IsInRole(Roles.Administrator))
+{
+    <p>
+        <a asp-action="Edit" asp-route-id="@Model.Book.Id" class="btn btn-outline-secondary">Редагувати</a>
+        <a asp-action="Delete" asp-route-id="@Model.Book.Id" class="btn btn-outline-danger">Видалити</a>
+    </p>
+}
+else if (User.IsInRole(Roles.User))
 {
     <hr />
     <h4>Мій статус читання</h4>
-    @if (Model.MyStatus is null)
+    @if (Model.MyUserBookId is null)
     {
         <form method="post" asp-controller="MyBooks" asp-action="Add">
-            @Html.AntiForgeryToken()
             <input type="hidden" name="bookId" value="@Model.Book.Id" />
-            <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Books", new { id = Model.Book.Id })" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
             <button type="submit" class="btn btn-primary">Додати до моїх книг</button>
         </form>
     }
     else
     {
-        <form method="post" asp-controller="MyBooks" asp-action="UpdateStatus" class="d-flex align-items-center gap-2">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="userBookId" value="@Model.MyUserBookId" />
-            <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Books", new { id = Model.Book.Id })" />
-            <select name="status" class="form-select w-auto">
-                @foreach (ReadingStatus s in Enum.GetValues(typeof(ReadingStatus)))
-                {
-                    <option value="@s" selected="@(Model.MyStatus == s)">@s.GetDisplayName()</option>
-                }
-            </select>
-            <button type="submit" class="btn btn-outline-primary">Оновити статус</button>
-        </form>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <form method="post" asp-controller="MyBooks" asp-action="UpdateStatus" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="userBookId" value="@Model.MyUserBookId" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <select name="status" class="form-select w-auto">
+                    @foreach (var s in Enum.GetValues<ReadingStatus>())
+                    {
+                        <option value="@s" selected="@(Model.MyStatus == s)">@s.GetDisplayName()</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-outline-primary">Оновити статус</button>
+            </form>
+            <form method="post" asp-controller="MyBooks" asp-action="Remove">
+                <input type="hidden" name="userBookId" value="@Model.MyUserBookId" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <button type="submit" class="btn btn-outline-danger">Прибрати з моїх книг</button>
+            </form>
+        </div>
 
         <h4 class="mt-4">Моя оцінка</h4>
-        <form method="post" asp-controller="MyBooks" asp-action="Rate" class="d-flex align-items-center gap-2">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="bookId" value="@Model.Book.Id" />
-            <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Books", new { id = Model.Book.Id })" />
-            <select name="value" class="form-select w-auto">
-                @for (int i = 1; i <= 5; i++)
-                {
-                    <option value="@i" selected="@(Model.MyRating == i)">@i</option>
-                }
-            </select>
-            <button type="submit" class="btn btn-outline-success">Оцінити</button>
-        </form>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <form method="post" asp-controller="MyBooks" asp-action="Rate" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="bookId" value="@Model.Book.Id" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <select name="value" class="form-select w-auto" required>
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <option value="@i" selected="@(Model.MyRating == i)">@i</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-outline-success">@(Model.MyRating is null ? "Оцінити" : "Змінити оцінку")</button>
+            </form>
+            @if (Model.MyRating is not null)
+            {
+                <form method="post" asp-controller="MyBooks" asp-action="Rate">
+                    <input type="hidden" name="bookId" value="@Model.Book.Id" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit" class="btn btn-link text-danger">Прибрати оцінку</button>
+                </form>
+            }
+        </div>
     }
 }
 

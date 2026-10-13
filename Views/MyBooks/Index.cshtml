@@ -1,14 +1,31 @@
-@model List<BookTracker.ViewModels.MyBookItemViewModel>
+@model BookTracker.ViewModels.MyBooksViewModel
 @using BookTracker.Models
 @{
     ViewData["Title"] = "Мої книги";
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
 <h1>Мої книги</h1>
 
-@if (!Model.Any())
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link @(Model.StatusFilter is null ? "active" : "")" asp-action="Index">Усі (@Model.TotalCount)</a>
+    </li>
+    @foreach (var s in Enum.GetValues<ReadingStatus>())
+    {
+        <li class="nav-item">
+            <a class="nav-link @(Model.StatusFilter == s ? "active" : "")" asp-action="Index" asp-route-status="@s">@s.GetDisplayName() (@Model.StatusCounts[s])</a>
+        </li>
+    }
+</ul>
+
+@if (Model.TotalCount == 0)
 {
     <p>Ви ще не додали жодної книги. <a asp-controller="Books" asp-action="Index">Перейти до каталогу</a>.</p>
+}
+else if (Model.Items.Count == 0)
+{
+    <p>У цьому розділі поки немає книг.</p>
 }
 else
 {
@@ -19,21 +36,22 @@ else
                 <th>Автор</th>
                 <th>Статус</th>
                 <th>Моя оцінка</th>
+                <th>Додано</th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.Items)
         {
             <tr>
                 <td><a asp-controller="Books" asp-action="Details" asp-route-id="@item.UserBook.BookId">@item.UserBook.Book!.Title</a></td>
                 <td>@item.UserBook.Book!.Author</td>
                 <td>
-                    <form method="post" asp-action="UpdateStatus" class="d-flex align-items-center gap-2">
-                        @Html.AntiForgeryToken()
+                    <form method="post" asp-action="UpdateStatus">
                         <input type="hidden" name="userBookId" value="@item.UserBook.Id" />
-                        <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
-                            @foreach (ReadingStatus s in Enum.GetValues(typeof(ReadingStatus)))
+                        <input type="hidden" name="returnUrl" value="@currentUrl" />
+                        <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()" aria-label="Статус читання">
+                            @foreach (var s in Enum.GetValues<ReadingStatus>())
                             {
                                 <option value="@s" selected="@(item.UserBook.Status == s)">@s.GetDisplayName()</option>
                             }
@@ -41,10 +59,10 @@ else
                     </form>
                 </td>
                 <td>
-                    <form method="post" asp-action="Rate" class="d-flex align-items-center gap-2">
-                        @Html.AntiForgeryToken()
+                    <form method="post" asp-action="Rate">
                         <input type="hidden" name="bookId" value="@item.UserBook.BookId" />
-                        <select name="value" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                        <input type="hidden" name="returnUrl" value="@currentUrl" />
+                        <select name="value" class="form-select form-select-sm w-auto" onchange="this.form.submit()" aria-label="Моя оцінка">
                             <option value="">—</option>
                             @for (int i = 1; i <= 5; i++)
                             {
@@ -53,10 +71,11 @@ else
                         </select>
                     </form>
                 </td>
+                <td>@item.UserBook.AddedAt.ToLocalTime().ToString("dd.MM.yyyy")</td>
                 <td>
                     <form method="post" asp-action="Remove">
-                        @Html.AntiForgeryToken()
                         <input type="hidden" name="userBookId" value="@item.UserBook.Id" />
+                        <input type="hidden" name="returnUrl" value="@currentUrl" />
                         <button type="submit" class="btn btn-sm btn-outline-danger">Прибрати</button>
                     </form>
                 </td>
