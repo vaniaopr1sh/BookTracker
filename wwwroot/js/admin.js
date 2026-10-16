@@ -11,10 +11,12 @@
     if (!Auth || !BookWings) return;
 
     function renderRoles(cell, roles) {
+        // Назву ролі адміністратора беремо з розмітки (Roles.Administrator на сервері), а не дублюємо в JS
+        const adminRole = cell.closest("[data-bw-admin-role]")?.dataset.bwAdminRole;
         cell.replaceChildren();
         roles.forEach((role) => {
             const badge = document.createElement("span");
-            badge.className = "bw-role-badge" + (role === "Адміністратор" ? "" : " bw-role-badge--user");
+            badge.className = "bw-role-badge" + (role === adminRole ? "" : " bw-role-badge--user");
             badge.textContent = role;
             cell.append(badge, document.createTextNode(" "));
         });

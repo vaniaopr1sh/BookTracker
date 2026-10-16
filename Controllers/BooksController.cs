@@ -21,7 +21,9 @@ public class BooksController : Controller
 
     // GET: /Books?search=...&genre=...&sort=...
     // Для AJAX-запитів (живий пошук у каталозі) повертає лише сітку карток.
-    public async Task<IActionResult> Index(string? search, string? genre, string? sort)
+    private const int CatalogPageSize = 12;
+
+    public async Task<IActionResult> Index(string? search, string? genre, string? sort, int page = 1)
     {
         sort = sort is not null && CatalogSort.Options.ContainsKey(sort) ? sort : CatalogSort.Title;
         search = search?.Trim();
@@ -65,9 +67,16 @@ public class BooksController : Controller
             _ => items.OrderBy(i => i.Book.Title)
         };
 
+        var sorted = items.ToList();
+        var totalPages = Math.Max(1, (int)Math.Ceiling(sorted.Count / (double)CatalogPageSize));
+        page = Math.Clamp(page, 1, totalPages);
+
         var model = new CatalogViewModel
         {
-            Books = items.ToList(),
+            Books = sorted.Skip((page - 1) * CatalogPageSize).Take(CatalogPageSize).ToList(),
+            FilteredCount = sorted.Count,
+            Page = page,
+            TotalPages = totalPages,
             Search = search,
             Genre = genre,
             Sort = sort,
@@ -111,6 +120,20 @@ public class BooksController : Controller
             model.MyStatus = myUserBook?.Status;
             model.MyRating = ratings.FirstOrDefault(r => r.UserId == userId)?.Value;
         }
+
+        var similarBooks = await _context.Books
+            .Where(b => b.Id != id && ((book.Genre != null && b.Genre == book.Genre) || b.Author == book.Author))
+            .OrderByDescending(b => b.Author == book.Author)
+            .ThenByDescending(b => b.Ratings.Average(r => (double?)r.Value))
+            .Take(4)
+            .Select(b => new BookListItemViewModel
+            {
+                Book = b,
+                AverageRating = b.Ratings.Average(r => (double?)r.Value),
+                RatingsCount = b.Ratings.Count
+            })
+            .ToListAsync();
+        model.Similar = similarBooks;
 
         return View(model);
     }

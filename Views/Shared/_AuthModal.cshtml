@@ -68,14 +68,14 @@
                                 <label class="form-label" for="regPassword">Пароль</label>
                                 <div class="bw-password">
                                     <input class="form-control" id="regPassword" name="password" type="password" autocomplete="new-password"
-                                           placeholder="Щонайменше 6 символів" required minlength="6"
+                                           placeholder="Щонайменше 6 символів" required minlength="6" data-bw-strong
                                            data-msg-required="Вкажіть пароль" data-msg-minlength="Пароль має містити щонайменше 6 символів" />
                                     <button type="button" class="bw-password-toggle" data-bw-toggle-password aria-label="Показати пароль">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" /><circle cx="12" cy="12" r="3" /></svg>
                                     </button>
                                 </div>
                                 <div class="bw-password-strength" aria-hidden="true"><span data-bw-strength></span></div>
-                                <div class="bw-auth-hint mt-1">Використайте великі й малі літери, цифру та спецсимвол.</div>
+                                <div class="bw-auth-hint mt-1">Велика й мала латинські літери, цифра та спецсимвол, наприклад <code>Knyha2026!</code></div>
                                 <div class="invalid-feedback d-block"></div>
                             </div>
                             <div class="mb-4">

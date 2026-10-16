@@ -99,7 +99,14 @@
                 error = msg("Minlength", `Мінімум ${input.minLength} символів`);
             } else if (input.maxLength > 0 && value.length > input.maxLength) {
                 error = msg("Maxlength", `Максимум ${input.maxLength} символів`);
-            } else if (input.dataset.match) {
+            } else if (input.hasAttribute("data-bw-strong")) {
+                // Ті самі правила, що й у ASP.NET Identity на сервері
+                if (!/[A-Z]/.test(value)) error = "Додайте хоча б одну велику латинську літеру";
+                else if (!/[a-z]/.test(value)) error = "Додайте хоча б одну малу латинську літеру";
+                else if (!/\d/.test(value)) error = "Додайте хоча б одну цифру";
+                else if (!/[^A-Za-z0-9]/.test(value)) error = "Додайте хоча б один спецсимвол (!, @, # тощо)";
+            }
+            if (!error && value && input.dataset.match) {
                 const other = document.getElementById(input.dataset.match);
                 if (other && other.value !== input.value) error = msg("Match", "Значення не збігаються");
             }
@@ -410,7 +417,12 @@
         // Тінь шапки під час прокручування
         const header = document.getElementById("bwHeader");
         if (header) {
-            const onScroll = () => header.classList.toggle("is-scrolled", window.scrollY > 8);
+            const toTop = document.getElementById("bwToTop");
+            const onScroll = () => {
+                header.classList.toggle("is-scrolled", window.scrollY > 8);
+                if (toTop) toTop.classList.toggle("is-visible", window.scrollY > 600);
+            };
+            if (toTop) toTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
             window.addEventListener("scroll", onScroll, { passive: true });
             onScroll();
         }

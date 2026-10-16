@@ -110,7 +110,35 @@
         });
     });
 
+    // «Показати ще»: підвантажуємо наступну сторінку і додаємо картки в кінець сітки
+    async function loadMore(link) {
+        BookWings.setLoading(link, true, "Завантажуємо…");
+        try {
+            const response = await fetch(link.href, {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                credentials: "same-origin"
+            });
+            if (!response.ok) throw new Error();
+            const doc = new DOMParser().parseFromString(await response.text(), "text/html");
+            const grid = results.querySelector(".bw-grid");
+            doc.querySelectorAll(".bw-grid > [data-bw-book]").forEach((card) => grid.appendChild(document.importNode(card, true)));
+            const oldWrap = results.querySelector("[data-bw-load-more-wrap]");
+            const newWrap = doc.querySelector("[data-bw-load-more-wrap]");
+            if (newWrap) oldWrap.replaceWith(document.importNode(newWrap, true));
+            else oldWrap.remove();
+        } catch {
+            BookWings.setLoading(link, false);
+            BookWings.toast("Не вдалося завантажити наступні книги", "error");
+        }
+    }
+
     results.addEventListener("click", (e) => {
+        const more = e.target.closest("[data-bw-load-more]");
+        if (more) {
+            e.preventDefault();
+            loadMore(more);
+            return;
+        }
         if (e.target.closest("[data-bw-reset-filters]")) {
             e.preventDefault();
             searchInput.value = "";

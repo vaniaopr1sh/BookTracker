@@ -4,11 +4,11 @@
 <div class="bw-result-info" data-bw-result-info>
     @if (Model.HasFilters)
     {
-        <text>Знайдено <strong>@Model.Books.Count</strong> з @Model.TotalCount книг</text>
+        <text>Знайдено <strong>@Model.FilteredCount</strong> з @Model.TotalCount книг</text>
     }
     else
     {
-        <text>У каталозі <strong>@Model.Books.Count</strong> книг</text>
+        <text>У каталозі <strong>@Model.TotalCount</strong> книг</text>
     }
 </div>
 
@@ -48,4 +48,14 @@ else
             </div>
         }
     </div>
+
+    @if (Model.HasMore)
+    {
+        <div class="text-center mt-4" data-bw-load-more-wrap>
+            <a class="btn btn-outline-bw" data-bw-load-more
+               asp-action="Index" asp-route-search="@Model.Search" asp-route-genre="@Model.Genre" asp-route-sort="@Model.Sort" asp-route-page="@(Model.Page + 1)">
+                Показати ще (@(Model.FilteredCount - Model.Page * 12 > 12 ? 12 : Model.FilteredCount - Model.Page * 12))
+            </a>
+        </div>
+    }
 }

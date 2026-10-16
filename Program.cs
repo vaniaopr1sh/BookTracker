@@ -17,6 +17,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
+    .AddErrorDescriber<UkrainianIdentityErrorDescriber>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // Cookie лишається основною схемою для MVC-сторінок; неавторизованого

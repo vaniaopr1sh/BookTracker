@@ -1,4 +1,4 @@
-# BookWings — Frontend (етап ~70%)
+# BookWings — Frontend (завершено)
 
 Фронтенд книжкового порталу **BookWings** на ASP.NET Core MVC (Razor + Bootstrap 5 + vanilla JS),
 оформлений за брендбуком BookWings 2026.
@@ -45,6 +45,16 @@
     сторінками, редагуванням і видаленням; керування користувачами (пошук, надання/зняття прав адміністратора через
     `POST /api/admin/users/{id}/role`, свою роль змінити не можна).
 
+11. **Інтеграція та стабілізація** — повідомлення ASP.NET Identity українською (`UkrainianIdentityErrorDescriber`),
+    перевірка надійності пароля в браузері за тими самими правилами, що й на сервері; сторінки налаштувань
+    облікового запису (контактні дані, зміна пароля) перекладені й оформлені у фірмовому стилі;
+    виправлено повернення на полицю після зміни статусу; назву ролі в JS більше не продубльовано;
+    пагінація каталогу («Показати ще») для великої кількості книг.
+12. **Фінальне доопрацювання** — нова сторінка «Моя полиця» (картки, вкладки-фільтри за статусом з лічильниками),
+    блок «Вам також може сподобатися» на сторінці книги, кнопка «Вгору», швидкий вхід / кабінет на телефоні
+    без відкриття меню, підвищено контраст дрібного тексту до рівня WCAG AA, мета-теги для соцмереж,
+    версія сторінок для друку, файл рішення `BookTracker.sln` для Visual Studio.
+
 Додатково: клієнтська валідація, сторінки 403 / помилки, адаптивність (мобільні), доступність (aria, фокус).
 
 ## Нові / змінені файли
@@ -58,6 +68,9 @@ wwwroot/js/profile.js, wwwroot/js/validation-uk.js
 Areas/Admin/Controllers/AdminControllerBase.cs, DashboardController.cs, CatalogController.cs, UsersController.cs
 Areas/Admin/Views/Shared/_AdminLayout.cshtml, Dashboard/Index, Catalog/Index, Users/Index
 Controllers/Api/AdminApiController.cs, ViewModels/AdminViewModels.cs, wwwroot/js/admin.js
+Services/UkrainianIdentityErrorDescriber.cs
+Areas/Identity/Pages/Account/Manage/_Layout, _ManageNav, Index, ChangePassword (+ .cs)
+BookTracker.sln
 Services/JwtOptions.cs, Services/JwtTokenService.cs
 ViewModels/AuthDtos.cs, CatalogViewModel.cs, HomeViewModel.cs
 Views/Shared/_Layout, _LoginPartial, _AuthModal, _ConfirmModal, _BookCard, _BookCover, _Stars, Error
@@ -78,7 +91,9 @@ dotnet run
 > Ключ `Jwt:Key` в `appsettings.json` — лише для розробки, для продакшну замініть його.
 
 ## Перевірка
-Проєкт зібрано (`dotnet build`, без помилок) і запущено; автоматичний браузерний сценарій (33 перевірки) пройдено:
-вхід / реєстрація у popup, JWT, живий пошук, створення / редагування / видалення книги, валідація форм,
-полиця та оцінки, особистий кабінет, захист /Admin для гостя і користувача, заборона API для не-адміна,
-зміна ролі, вихід, сторінка 404, мобільна верстка, відсутність помилок JavaScript.
+Проєкт зібрано (`dotnet build`, без помилок) і запущено. Автоматичний браузерний сценарій (50 перевірок) пройдено повністю:
+вхід / реєстрація у popup, JWT, перевірка пароля, живий пошук і «Показати ще», створення / редагування / видалення книги,
+валідація форм, полиця (додавання, статус, оцінка, фільтр, видалення з підтвердженням), схожі книги, особистий кабінет,
+зміна пароля, помилки Identity українською, захист /Admin для гостя і користувача, заборона адмін-API для звичайного
+користувача, зміна ролі, вихід, сторінка 404, мобільна верстка (без горизонтальної прокрутки, вхід без меню),
+відсутність помилок JavaScript.

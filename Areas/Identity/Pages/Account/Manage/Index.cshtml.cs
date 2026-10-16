@@ -56,8 +56,8 @@ namespace BookTracker.Areas.Identity.Pages.Account.Manage
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Phone]
-            [Display(Name = "Phone number")]
+            [Phone(ErrorMessage = "Вкажіть коректний номер телефону")]
+            [Display(Name = "Номер телефону")]
             public string PhoneNumber { get; set; }
         }
 
@@ -79,7 +79,7 @@ namespace BookTracker.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound("Користувача не знайдено");
             }
 
             await LoadAsync(user);
@@ -91,7 +91,7 @@ namespace BookTracker.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound("Користувача не знайдено");
             }
 
             if (!ModelState.IsValid)
@@ -106,13 +106,13 @@ namespace BookTracker.Areas.Identity.Pages.Account.Manage
                 var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
                 if (!setPhoneResult.Succeeded)
                 {
-                    StatusMessage = "Unexpected error when trying to set phone number.";
+                    StatusMessage = "Не вдалося зберегти номер телефону. Спробуйте ще раз";
                     return RedirectToPage();
                 }
             }
 
             await _signInManager.RefreshSignInAsync(user);
-            StatusMessage = "Your profile has been updated";
+            StatusMessage = "Контактні дані оновлено";
             return RedirectToPage();
         }
     }

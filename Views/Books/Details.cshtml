@@ -132,6 +132,22 @@
     </div>
 </div>
 
+@if (Model.Similar.Any())
+{
+    <section class="bw-section pb-0" aria-labelledby="similarTitle">
+        <h2 class="bw-title h3" id="similarTitle">Вам також може сподобатися</h2>
+        <p class="bw-subtitle">Книги того ж жанру або автора</p>
+        <div class="bw-grid">
+            @foreach (var item in Model.Similar)
+            {
+                <div data-bw-book="@item.Book.Id">
+                    <partial name="_BookCard" model="item" />
+                </div>
+            }
+        </div>
+    </section>
+}
+
 <div class="mt-5">
     <a asp-action="Index" class="btn btn-outline-bw">&larr; Назад до каталогу</a>
 </div>

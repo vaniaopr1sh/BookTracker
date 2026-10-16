@@ -10,7 +10,8 @@
     --bw-cream: #ECE9E2;
     --bw-sand: #D1D0BD;
     --bw-olive: #ACAC85;
-    --bw-olive-dark: #8E8E66;
+    /* Затемнений відтінок фірмової оливки для дрібного тексту: контраст 4.9:1 на кремовому фоні (WCAG AA) */
+    --bw-olive-dark: #666644;
     --bw-brown: #58432E;
     --bw-dark: #33271B;
     --bw-white: #FAF9F5;
@@ -1098,6 +1099,82 @@ tr.is-removing, li.is-removing { opacity: 0; transition: opacity .35s ease; }
     .bw-bars li { grid-template-columns: 95px 1fr 2rem; }
 }
 
+/* ---------- Фінальне доопрацювання ---------- */
+/* Бічна навігація (налаштування облікового запису) */
+.bw-side-nav {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    background: var(--bw-white);
+    border-radius: var(--bw-radius);
+    box-shadow: var(--bw-shadow);
+    padding: .75rem;
+}
+
+.bw-side-nav a {
+    padding: .6rem .9rem;
+    border-radius: var(--bw-radius-sm);
+    color: var(--bw-dark);
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color var(--bw-transition);
+}
+
+.bw-side-nav a:hover { background: rgba(172, 172, 133, .22); }
+.bw-side-nav a.active { background: var(--bw-brown); color: var(--bw-cream); }
+
+.bw-narrow-form { max-width: 460px; }
+
+/* Сповіщення Bootstrap у фірмових кольорах (наприклад, «Пароль змінено») */
+.alert { border-radius: var(--bw-radius-sm); border: 0; }
+.alert-success { background: rgba(172, 172, 133, .3); color: var(--bw-dark); border-left: 4px solid var(--bw-olive-dark); }
+.alert-danger { background: rgba(155, 59, 46, .1); color: var(--bw-danger); border-left: 4px solid var(--bw-danger); }
+
+.bw-chip-count {
+    display: inline-block;
+    min-width: 1.4rem;
+    margin-left: .25rem;
+    padding: 0 .4rem;
+    border-radius: 999px;
+    background: rgba(51, 39, 27, .1);
+    font-size: .75rem;
+}
+
+.bw-chip.active .bw-chip-count { background: rgba(51, 39, 27, .2); }
+
+a.bw-avatar:hover { color: var(--bw-dark); box-shadow: 0 0 0 3px rgba(172, 172, 133, .45); }
+
+/* Кнопка «Вгору» */
+.bw-to-top {
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 1080;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    border: 0;
+    background: var(--bw-brown);
+    color: var(--bw-cream);
+    box-shadow: var(--bw-shadow-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity var(--bw-transition), transform var(--bw-transition), background-color var(--bw-transition);
+}
+
+.bw-to-top.is-visible { opacity: 1; transform: none; pointer-events: auto; }
+.bw-to-top:hover { background: var(--bw-dark); }
+
+/* Друк сторінки книги без зайвих елементів */
+@media print {
+    .bw-header, .bw-footer, .bw-to-top, .bw-toast-container, .btn, form { display: none !important; }
+    body { background: #fff; }
+}
+
 /* ---------- Адаптивність ---------- */
 @media (max-width: 575.98px) {
     .bw-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; }
@@ -1108,4 +1185,6 @@ tr.is-removing, li.is-removing { opacity: 0; transition: opacity .35s ease; }
     .bw-logo-text { font-size: 1.35rem; }
     .bw-form-card, .bw-philosophy { padding: 1.25rem; }
     .bw-auth-body { padding: 1.5rem 1.25rem; }
+    .bw-details-cover { max-width: 220px; margin: 0 auto; }
+    .bw-section-head .btn { width: 100%; }
 }

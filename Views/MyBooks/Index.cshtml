@@ -1,6 +1,7 @@
 @model List<BookTracker.ViewModels.MyBookItemViewModel>
 @{
     ViewData["Title"] = "Мої книги";
+    var statuses = Enum.GetValues<ReadingStatus>();
 }
 
 <div class="bw-section-head">
@@ -22,56 +23,94 @@
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-striped align-middle bw-table mb-0">
-            <thead>
-                <tr>
-                    <th>Книга</th>
-                    <th>Статус</th>
-                    <th>Моя оцінка</th>
-                    <th class="text-end"><span class="visually-hidden">Дії</span></th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>
-                        <a asp-controller="Books" asp-action="Details" asp-route-id="@item.UserBook.BookId" class="fw-semibold text-decoration-none">@item.UserBook.Book!.Title</a>
-                        <div class="small text-secondary">@item.UserBook.Book!.Author</div>
-                    </td>
-                    <td>
-                        <form method="post" asp-action="UpdateStatus">
-                            <input type="hidden" name="userBookId" value="@item.UserBook.Id" />
-                            <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()" aria-label="Статус читання">
-                                @foreach (ReadingStatus s in Enum.GetValues(typeof(ReadingStatus)))
-                                {
-                                    <option value="@s" selected="@(item.UserBook.Status == s)">@s.GetDisplayName()</option>
-                                }
-                            </select>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" asp-action="Rate">
-                            <input type="hidden" name="bookId" value="@item.UserBook.BookId" />
-                            <select name="value" class="form-select form-select-sm w-auto" onchange="this.form.submit()" aria-label="Моя оцінка">
-                                <option value="">—</option>
-                                @for (int i = 1; i <= 5; i++)
-                                {
-                                    <option value="@i" selected="@(item.MyRating == i)">@(new string('★', i))</option>
-                                }
-                            </select>
-                        </form>
-                    </td>
-                    <td class="text-end">
-                        <form method="post" asp-action="Remove" data-bw-confirm="Прибрати «@item.UserBook.Book!.Title» з вашої полиці?">
-                            <input type="hidden" name="userBookId" value="@item.UserBook.Id" />
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Прибрати</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
+    @* Вкладки-фільтри за статусом (працюють без перезавантаження, див. скрипт нижче) *@
+    <div class="bw-genre-chips" role="tablist" aria-label="Фільтр за статусом читання">
+        <button type="button" class="bw-chip active" data-bw-shelf-filter="" role="tab" aria-selected="true">
+            Усі <span class="bw-chip-count">@Model.Count</span>
+        </button>
+        @foreach (var s in statuses)
+        {
+            <button type="button" class="bw-chip" data-bw-shelf-filter="@s" role="tab" aria-selected="false">
+                @s.GetDisplayName() <span class="bw-chip-count">@Model.Count(m => m.UserBook.Status == s)</span>
+            </button>
+        }
     </div>
+
+    <div class="bw-grid" id="bwShelf">
+        @foreach (var item in Model)
+        {
+            var book = item.UserBook.Book!;
+            <article class="bw-book-card" data-bw-shelf-item="@item.UserBook.Status">
+                <a class="bw-book-card-link" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">
+                    <div class="bw-cover">
+                        <span class="bw-in-list-badge bw-status-@item.UserBook.Status.ToString().ToLower()">@item.UserBook.Status.GetDisplayName()</span>
+                        <partial name="_BookCover" model="book" />
+                    </div>
+                    <div class="bw-book-body">
+                        <h2 class="bw-book-title">@book.Title</h2>
+                        <div class="bw-book-author">@book.Author</div>
+                    </div>
+                </a>
+                <div class="bw-book-actions flex-column">
+                    <form method="post" asp-action="UpdateStatus" class="w-100">
+                        <input type="hidden" name="userBookId" value="@item.UserBook.Id" />
+                        <input type="hidden" name="returnUrl" value="@Url.Action("Index")" />
+                        <label class="visually-hidden" for="status-@item.UserBook.Id">Статус «@book.Title»</label>
+                        <select id="status-@item.UserBook.Id" name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            @foreach (var s in statuses)
+                            {
+                                <option value="@s" selected="@(item.UserBook.Status == s)">@s.GetDisplayName()</option>
+                            }
+                        </select>
+                    </form>
+                    <form method="post" asp-action="Rate" class="w-100">
+                        <input type="hidden" name="bookId" value="@book.Id" />
+                        <input type="hidden" name="returnUrl" value="@Url.Action("Index")" />
+                        <label class="visually-hidden" for="rate-@item.UserBook.Id">Оцінка «@book.Title»</label>
+                        <select id="rate-@item.UserBook.Id" name="value" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Без оцінки</option>
+                            @for (var i = 5; i >= 1; i--)
+                            {
+                                <option value="@i" selected="@(item.MyRating == i)">@(new string('★', i)) @i</option>
+                            }
+                        </select>
+                    </form>
+                    <form method="post" asp-action="Remove" class="w-100" data-bw-confirm="Прибрати «@book.Title» з вашої полиці?">
+                        <input type="hidden" name="userBookId" value="@item.UserBook.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">Прибрати з полиці</button>
+                    </form>
+                </div>
+            </article>
+        }
+    </div>
+
+    <div class="bw-empty mt-3" id="bwShelfEmpty" hidden>
+        <h3>Тут поки нічого немає</h3>
+        <p>У вас немає книг з таким статусом.</p>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Фільтр полиці за статусом без перезавантаження сторінки
+        (function () {
+            const chips = document.querySelectorAll("[data-bw-shelf-filter]");
+            const items = document.querySelectorAll("[data-bw-shelf-item]");
+            const empty = document.getElementById("bwShelfEmpty");
+            chips.forEach((chip) => chip.addEventListener("click", () => {
+                const status = chip.dataset.bwShelfFilter;
+                let visible = 0;
+                chips.forEach((c) => {
+                    c.classList.toggle("active", c === chip);
+                    c.setAttribute("aria-selected", c === chip ? "true" : "false");
+                });
+                items.forEach((item) => {
+                    const show = !status || item.dataset.bwShelfItem === status;
+                    item.hidden = !show;
+                    if (show) visible++;
+                });
+                if (empty) empty.hidden = visible > 0;
+            }));
+        })();
+    </script>
 }

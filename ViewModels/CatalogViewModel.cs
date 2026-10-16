@@ -26,6 +26,10 @@ public class CatalogViewModel
     public string? Genre { get; set; }
     public string Sort { get; set; } = CatalogSort.Title;
     public int TotalCount { get; set; }
+    public int FilteredCount { get; set; }
+    public int Page { get; set; } = 1;
+    public int TotalPages { get; set; } = 1;
+    public bool HasMore => Page < TotalPages;
 
     public bool HasFilters => !string.IsNullOrWhiteSpace(Search) || !string.IsNullOrWhiteSpace(Genre);
 }
